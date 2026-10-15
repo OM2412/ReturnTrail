@@ -3,7 +3,7 @@ package com.returntrail.graph;
 import com.falkordb.Driver;
 import com.falkordb.ResultSet;
 import com.returntrail.investigation.PickupConflictDetector.Finding;
-import org.springframework.beans.factory.annotation.Value;
+import com.returntrail.session.GuestGraphScope;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -15,13 +15,13 @@ import java.util.Map;
 public class CaseActionRepository {
 
     private final Driver driver;
-    private final String graphName;
+    private final GuestGraphScope graphScope;
 
     public CaseActionRepository(
             Driver driver,
-            @Value("${returntrail.graph.name}") String graphName) {
+            GuestGraphScope graphScope) {
         this.driver = driver;
-        this.graphName = graphName;
+        this.graphScope = graphScope;
     }
 
     public ActionRow createFollowup(Finding finding) {
@@ -53,7 +53,7 @@ public class CaseActionRepository {
                 "createdAt", Instant.now().toString());
 
         List<ActionRow> saved = readRows(
-                driver.graph(graphName).query(query, params));
+                driver.graph(graphScope.graphName()).query(query, params));
 
         if (saved.size() != 1) {
             throw new IllegalStateException("Could not save one case action");
@@ -70,7 +70,7 @@ public class CaseActionRepository {
                 MERGE (a)-[:REFERENCES]->(d)
                 """;
 
-        driver.graph(graphName).query(linkQuery, Map.of(
+        driver.graph(graphScope.graphName()).query(linkQuery, Map.of(
                 "caseId", finding.caseId(),
                 "actionId", actionId,
                 "pickupId", finding.pickupId(),
@@ -91,7 +91,7 @@ public class CaseActionRepository {
                 ORDER BY actionId
                 """;
 
-        return readRows(driver.graph(graphName)
+        return readRows(driver.graph(graphScope.graphName())
                 .query(query, Map.of("caseId", caseId)));
     }
 

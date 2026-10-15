@@ -2,7 +2,7 @@ package com.returntrail.graph;
 
 import com.falkordb.Driver;
 import com.falkordb.ResultSet;
-import org.springframework.beans.factory.annotation.Value;
+import com.returntrail.session.GuestGraphScope;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -14,13 +14,13 @@ import java.util.Map;
 public class CaseClarificationRepository {
 
     private final Driver driver;
-    private final String graphName;
+    private final GuestGraphScope graphScope;
 
     public CaseClarificationRepository(
             Driver driver,
-            @Value("${returntrail.graph.name}") String graphName) {
+            GuestGraphScope graphScope) {
         this.driver = driver;
-        this.graphName = graphName;
+        this.graphScope = graphScope;
     }
 
     public ClarificationRow resolve(String actionId, String note) {
@@ -44,7 +44,7 @@ public class CaseClarificationRepository {
                 """;
 
         List<ClarificationRow> rows = readRows(
-                driver.graph(graphName).query(query, Map.of(
+                driver.graph(graphScope.graphName()).query(query, Map.of(
                         "caseId", "CASE-001",
                         "actionId", actionId,
                         "clarificationId", "CLARIFICATION-" + actionId,
@@ -76,7 +76,7 @@ public class CaseClarificationRepository {
                 ORDER BY clarificationId
                 """;
 
-        return readRows(driver.graph(graphName)
+        return readRows(driver.graph(graphScope.graphName())
                 .query(query, Map.of("caseId", caseId)));
     }
 

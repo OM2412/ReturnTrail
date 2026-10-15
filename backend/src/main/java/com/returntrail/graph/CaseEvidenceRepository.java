@@ -2,7 +2,7 @@ package com.returntrail.graph;
 
 import com.falkordb.Driver;
 import com.falkordb.ResultSet;
-import org.springframework.beans.factory.annotation.Value;
+import com.returntrail.session.GuestGraphScope;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -13,13 +13,13 @@ import java.util.Map;
 public class CaseEvidenceRepository {
 
     private final Driver driver;
-    private final String graphName;
+    private final GuestGraphScope graphScope;
 
     public CaseEvidenceRepository(
             Driver driver,
-            @Value("${returntrail.graph.name}") String graphName) {
+            GuestGraphScope graphScope) {
         this.driver = driver;
-        this.graphName = graphName;
+        this.graphScope = graphScope;
     }
 
     public List<EvidenceRow> findByCaseId(String caseId) {
@@ -36,7 +36,7 @@ public class CaseEvidenceRepository {
                 ORDER BY evidenceId
                 """;
 
-        ResultSet result = driver.graph(graphName)
+        ResultSet result = driver.graph(graphScope.graphName())
                 .query(query, Map.of("caseId", caseId));
 
         List<EvidenceRow> rows = new ArrayList<>();

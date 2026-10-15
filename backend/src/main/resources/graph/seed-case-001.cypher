@@ -1,4 +1,4 @@
-﻿MERGE (c:Case {id:'CASE-001'})
+MERGE (c:Case {id:'CASE-001'})
 SET c.synthetic = true, c.title = 'Pickup cancellation disagreement'
 MERGE (o:Order {id:'ORDER-001'})
 SET o.amountPaise = 599900, o.currency = 'INR'
