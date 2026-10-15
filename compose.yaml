@@ -1,0 +1,21 @@
+﻿services:
+  falkordb:
+    image: falkordb/falkordb@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a
+    container_name: returntrail-falkordb
+    ports:
+      - "127.0.0.1:6380:6379"
+      - "127.0.0.1:3001:3000"
+    environment:
+      REDIS_ARGS: "--dir /data --appendonly yes"
+    volumes:
+      - returntrail_graph_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  returntrail_graph_data:
+

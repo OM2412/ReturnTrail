@@ -1,0 +1,22 @@
+# Local secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Build outputs
+**/target/
+**/node_modules/
+**/dist/
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.zip
+*.before-version-fix
