@@ -127,7 +127,11 @@ public class CaseInvestigationAgent {
 
                 return new InvestigationResponse(
                         "CASE-001", true, "AI_TOOL_CALLING", groq.model(),
-                        turn + 1, answer, List.copyOf(trace),
+                        turn + 1, "DETERMINISTIC_FROM_TOOL_RESULTS",
+                        CaseSummaryRenderer.render(
+                                evidence, findings, pendingFindings,
+                                clarifications, actions),
+                        List.copyOf(trace),
                         evidence, findings, pendingFindings,
                         clarifications, actions);
             }
@@ -308,6 +312,7 @@ public class CaseInvestigationAgent {
             String method,
             String model,
             int modelRequests,
+            String summaryMethod,
             String summary,
             List<ToolStep> toolTrace,
             List<EvidenceRow> evidence,
