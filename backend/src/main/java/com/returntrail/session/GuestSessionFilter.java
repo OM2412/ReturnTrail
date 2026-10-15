@@ -13,6 +13,12 @@ import java.io.IOException;
 @Component
 public class GuestSessionFilter extends OncePerRequestFilter {
 
+    private final GuestGraphLifecycle lifecycle;
+
+    public GuestSessionFilter(GuestGraphLifecycle lifecycle) {
+        this.lifecycle = lifecycle;
+    }
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         return !request.getServletPath().startsWith("/api/cases/");
@@ -24,21 +30,33 @@ public class GuestSessionFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
+        response.setHeader("Cache-Control", "no-store");
         HttpSession session = request.getSession(false);
 
         if (session == null
                 || !(session.getAttribute(GuestGraphScope.GRAPH_ATTRIBUTE)
                         instanceof String graph)
-                || !graph.matches("returntrail_guest_[a-f0-9]{32}")) {
-
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter().write(
-                    "{\"error\":\"Create a guest session first.\"}");
+                || !GuestGraphLifecycle.isGuestGraph(graph)) {
+            unauthorized(response);
             return;
         }
 
-        response.setHeader("Cache-Control", "no-store");
-        filterChain.doFilter(request, response);
+        GuestGraphLifecycle.Lease lease = lifecycle.acquire(graph);
+
+        if (lease == null) {
+            unauthorized(response);
+            return;
+        }
+
+        try (lease) {
+            filterChain.doFilter(request, response);
+        }
+    }
+
+    private void unauthorized(HttpServletResponse response) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write(
+                "{\"error\":\"Create a guest session first.\"}");
     }
 }
