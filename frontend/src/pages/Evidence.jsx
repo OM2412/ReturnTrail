@@ -183,9 +183,9 @@ export default function Evidence() {
             </article>
           </div>
           <div className="page-next">
-            <span>Explore the pickup shared by these records.</span>
-            <Link className="text-link" to="/case/graph">
-              View connections <ArrowRight size={17} />
+            <span>Different explanations deserve a clearer next question.</span>
+            <Link className="text-link" to="/case/investigation">
+              Open investigation <ArrowRight size={17} />
             </Link>
           </div>
         </>

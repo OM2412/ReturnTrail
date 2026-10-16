@@ -26,7 +26,7 @@ const navigation = [
   { to: "/case/investigation", label: "Investigation", icon: ScanLine },
   { to: "/case/tasks", label: "Follow-up tasks", icon: SquareCheck },
   { to: "/case/history", label: "Case history", icon: History },
-].filter((row) => ["/case", "/case/evidence", "/case/graph"].includes(row.to));
+];
 
 export default function CaseShell() {
   const { phase, data, error, working, refresh, start, reset } = useCase();
