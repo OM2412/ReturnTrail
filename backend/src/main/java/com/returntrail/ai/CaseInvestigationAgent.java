@@ -101,39 +101,47 @@ public class CaseInvestigationAgent {
         boolean actionsPrepared = false;
         int executedTools = 0;
 
-        for (int turn = 0; turn < 6; turn++) {
-            Map<String, Object> response = groq.complete(Map.of(
-                    "model", groq.model(),
-                    "messages", messages,
-                    "tools", tools,
-                    "tool_choice", "auto",
-                    "reasoning_effort", "low",
-                    "max_completion_tokens", 2048));
+        for (int turn = 0; turn < 5; turn++) {
+            String nextTool = !evidenceRead ? "get_case_evidence"
+                    : !clarificationsRead ? "get_case_clarifications"
+                    : !findingsRead ? "get_case_findings"
+                    : !pendingFindings.isEmpty() && !actionsPrepared
+                            ? "prepare_followup_action" : null;
 
-            Map<?, ?> message = readMessage(response);
-            Object callsValue = message.get("tool_calls");
-
-            if (!(callsValue instanceof List<?> calls) || calls.isEmpty()) {
-                if (!evidenceRead || !clarificationsRead || !findingsRead
-                        || (!pendingFindings.isEmpty() && !actionsPrepared)) {
-                    throw new IllegalStateException(
-                            "Agent answered before completing required tools");
-                }
-
-                if (!(message.get("content") instanceof String answer)
-                        || answer.isBlank()) {
-                    throw new IllegalStateException("Agent returned no summary");
-                }
-
+            if (nextTool == null) {
                 return new InvestigationResponse(
                         "CASE-001", true, "AI_TOOL_CALLING", groq.model(),
-                        turn + 1, "DETERMINISTIC_FROM_TOOL_RESULTS",
+                        turn, "DETERMINISTIC_FROM_TOOL_RESULTS",
                         CaseSummaryRenderer.render(
                                 evidence, findings, pendingFindings,
                                 clarifications, actions),
                         List.copyOf(trace),
                         evidence, findings, pendingFindings,
                         clarifications, actions);
+            }
+
+            List<Map<String, Object>> availableTools = tools.stream()
+                    .filter(definition -> nextTool.equals(
+                            ((Map<?, ?>) definition.get("function")).get("name")))
+                    .toList();
+
+            Map<String, Object> response = groq.complete(Map.of(
+                    "model", groq.model(),
+                    "messages", messages,
+                    "tools", availableTools,
+                    "tool_choice", Map.of(
+                            "type", "function",
+                            "function", Map.of("name", nextTool)),
+                    "parallel_tool_calls", false,
+                    "reasoning_effort", "low",
+                    "max_completion_tokens", 2048));
+
+            Map<?, ?> message = readMessage(response);
+            Object callsValue = message.get("tool_calls");
+
+            if (!(callsValue instanceof List<?> calls) || calls.size() != 1) {
+                throw new IllegalStateException(
+                        "Expected exactly one required tool call: " + nextTool);
             }
 
             Map<String, Object> assistant = new LinkedHashMap<>();
@@ -154,6 +162,11 @@ public class CaseInvestigationAgent {
                         || !(function.get("arguments") instanceof String arguments)
                         || !"function".equals(call.get("type"))) {
                     throw new IllegalStateException("Invalid tool call");
+                }
+
+                if (!nextTool.equals(name)) {
+                    throw new IllegalStateException(
+                            "Unexpected tool: " + name + "; expected: " + nextTool);
                 }
 
                 if (!"{}".equals(arguments.replaceAll("\\s", ""))) {
