@@ -53,7 +53,7 @@ export default function Graph() {
             </div>
             <Link
               className="button secondary"
-              to={`/case?doc=${encodeURIComponent(selected.evidenceId)}`}
+              to={`/case/evidence?doc=${encodeURIComponent(selected.evidenceId)}`}
             >
               Read the original record <ArrowUpRight size={17} />
             </Link>
