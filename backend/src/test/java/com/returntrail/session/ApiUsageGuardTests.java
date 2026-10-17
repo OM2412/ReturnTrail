@@ -129,4 +129,19 @@ class ApiUsageGuardTests {
         assertEquals(200, response.getStatus());
         verify(chain, times(21)).doFilter(any(), any());
     }
+    @Test void otherCasesCannotBypassGuestAiBudget() throws Exception {
+        var guard = new ApiUsageGuard();
+        var session = new MockHttpSession();
+        session.setAttribute(GuestGraphScope.GRAPH_ATTRIBUTE, "returntrail_guest_" + "b".repeat(32));
+        FilterChain chain = mock(FilterChain.class);
+        for (int attempt = 0; attempt < 7; attempt++) {
+            var request = new MockHttpServletRequest();
+            request.setMethod("POST"); request.setServletPath("/api/cases/CASE-002/investigate"); request.setSession(session);
+            var response = new MockHttpServletResponse();
+            guard.doFilter(request, response, chain);
+            if (attempt == 6) assertEquals(429, response.getStatus());
+        }
+        verify(chain, times(6)).doFilter(any(), any());
+    }
+
 }

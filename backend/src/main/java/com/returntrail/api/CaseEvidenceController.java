@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import com.returntrail.graph.CaseCatalogRepository;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -14,21 +16,25 @@ import java.util.List;
 @RestController
 public class CaseEvidenceController {
 
+    private final CaseCatalogRepository catalog;
+
     private static final Logger log =
             LoggerFactory.getLogger(CaseEvidenceController.class);
 
     private final CaseEvidenceRepository repository;
 
-    public CaseEvidenceController(CaseEvidenceRepository repository) {
+    public CaseEvidenceController(CaseEvidenceRepository repository, CaseCatalogRepository catalog) {
+        this.catalog = catalog;
         this.repository = repository;
     }
 
-    @GetMapping("/api/cases/CASE-001/evidence")
-    public EvidenceResponse evidence() {
+    @GetMapping("/api/cases/{caseId}/evidence")
+    public EvidenceResponse evidence(@PathVariable String caseId) {
+        catalog.requireCase(caseId);
         List<EvidenceRow> rows;
 
         try {
-            rows = repository.findByCaseId("CASE-001");
+            rows = repository.findByCaseId(caseId);
         } catch (RuntimeException exception) {
             log.error("Could not retrieve synthetic Case 1 graph evidence", exception);
             throw new ResponseStatusException(
@@ -37,7 +43,7 @@ public class CaseEvidenceController {
         }
 
         return new EvidenceResponse(
-                "CASE-001",
+                caseId,
                 true,
                 "FALKORDB",
                 rows.size(),

@@ -38,12 +38,20 @@ public class PickupConflictDetector {
                     .toList();
 
             if (customerClaims.isEmpty() || courierClaims.isEmpty()) {
+                var unknown = rows.stream().filter(r -> "UNKNOWN".equals(r.claimedStatus())).toList();
+                if (!unknown.isEmpty()) {
+                    var first = unknown.get(0);
+                    String identity = first.caseId() + "|" + first.pickupId() + "|PICKUP_CONTEXT_INCOMPLETE";
+                    findings.add(new Finding(UUID.nameUUIDFromBytes(identity.getBytes(StandardCharsets.UTF_8)).toString(),
+                            first.caseId(), first.pickupId(), "PICKUP_CONTEXT_INCOMPLETE", "REQUIRES_CLARIFICATION",
+                            "The pickup record does not include a failure reason.",
+                            "Please provide the missing recorded reason for pickup " + first.pickupId() + ".",
+                            rows.stream().distinct().sorted(java.util.Comparator.comparing(EvidenceRow::evidenceId)).toList()));
+                }
                 continue;
             }
 
             List<EvidenceRow> relevant = rows.stream()
-                    .filter(r -> "CUSTOMER_CANCELLED".equals(r.claimedStatus())
-                            || "COURIER_UNAVAILABLE".equals(r.claimedStatus()))
                     .distinct()
                     .sorted(java.util.Comparator.comparing(EvidenceRow::evidenceId)
                             .thenComparing(EvidenceRow::claimedStatus))
@@ -79,6 +87,11 @@ public class PickupConflictDetector {
             String status,
             String summary,
             String questionToAsk,
-            List<EvidenceRow> evidence) {
+            List<EvidenceRow> evidence, String evidenceRevision) {
+        public Finding(String findingId, String caseId, String pickupId, String type, String status,
+                String summary, String questionToAsk, List<EvidenceRow> evidence) {
+            this(findingId, caseId, pickupId, type, status, summary, questionToAsk,
+                    List.copyOf(evidence), EvidenceRevision.of(evidence));
+        }
     }
 }

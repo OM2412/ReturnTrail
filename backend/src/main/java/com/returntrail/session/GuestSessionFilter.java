@@ -11,6 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
+@org.springframework.core.annotation.Order(-90)
 public class GuestSessionFilter extends OncePerRequestFilter {
 
     private final GuestGraphLifecycle lifecycle;
@@ -21,7 +22,8 @@ public class GuestSessionFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getServletPath().startsWith("/api/cases/");
+        String path = request.getServletPath();
+        return !path.equals("/api/cases") && !path.startsWith("/api/cases/");
     }
 
     @Override
@@ -31,14 +33,11 @@ public class GuestSessionFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
 
         response.setHeader("Cache-Control", "no-store");
-        HttpSession session = request.getSession(false);
-
-        if (session == null
-                || !(session.getAttribute(GuestGraphScope.GRAPH_ATTRIBUTE)
-                        instanceof String graph)
-                || !GuestGraphLifecycle.isGuestGraph(graph)) {
-            unauthorized(response);
-            return;
+        String graph=com.returntrail.auth.WorkspaceAccess.authorizedGraph(request);
+        if(graph==null){unauthorized(response);return;}
+        request.setAttribute(com.returntrail.auth.WorkspaceAccess.PINNED_GRAPH,graph);
+        if(com.returntrail.auth.AccountWorkspaceRepository.isAccountGraph(graph)) {
+            filterChain.doFilter(request,response);return;
         }
 
         GuestGraphLifecycle.Lease lease = lifecycle.acquire(graph);
@@ -57,6 +56,6 @@ public class GuestSessionFilter extends OncePerRequestFilter {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
         response.getWriter().write(
-                "{\"error\":\"Create a guest session first.\"}");
+                "{\"error\":\"Sign in or create a guest session first.\"}");
     }
 }

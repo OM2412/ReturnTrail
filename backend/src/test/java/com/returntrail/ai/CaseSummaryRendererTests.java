@@ -37,7 +37,7 @@ class CaseSummaryRendererTests {
         assertTrue(summary.contains("DOC-002"));
         assertTrue(summary.contains("PICKUP-001"));
         assertTrue(summary.contains("Historical disagreements: 1."));
-        assertTrue(summary.contains("task status: RESOLVED"));
+        assertTrue(summary.contains("task status when recorded: RESOLVED"));
         assertTrue(summary.contains("not independently verified"));
         assertTrue(summary.contains("Pending follow-up findings: 0."));
         assertFalse(summary.contains("finding has been resolved"));

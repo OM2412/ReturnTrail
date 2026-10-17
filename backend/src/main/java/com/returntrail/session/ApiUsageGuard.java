@@ -16,7 +16,7 @@ import java.util.concurrent.Semaphore;
 import java.util.function.LongSupplier;
 
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE + 20)
+@Order(-80)
 public class ApiUsageGuard extends OncePerRequestFilter {
 
     private static final String BUDGET_ATTRIBUTE =
@@ -40,7 +40,8 @@ public class ApiUsageGuard extends OncePerRequestFilter {
 
         return !path.equals("/api/guest-sessions")
                 && !path.equals("/api/ai/check")
-                && !path.equals("/api/cases/CASE-001/investigate");
+                && !path.matches("/api/cases/CASE-[0-9]{3}/investigate")
+                && !path.matches("/api/cases/CASE-[0-9]{3}/(evidence|actions|actions/clarification)");
     }
 
     @Override
@@ -73,6 +74,17 @@ public class ApiUsageGuard extends OncePerRequestFilter {
         if (!hasGuestGraph(session)) {
             reject(response, 401, "Create a guest session first.");
             return;
+        }
+
+        if (path.matches("/api/cases/CASE-[0-9]{3}/(evidence|actions|actions/clarification)")) {
+            FixedWindow budget;
+            synchronized (session) {
+                Object existing=session.getAttribute("returntrail.guest.writeBudget");
+                budget=existing instanceof FixedWindow window?window:new FixedWindow(30,Duration.ofMinutes(5));
+                session.setAttribute("returntrail.guest.writeBudget",budget);
+            }
+            if(!budget.allow()) {reject(response,429,"Save limit reached. Please wait before adding more records or replies.");return;}
+            chain.doFilter(request,response);return;
         }
 
         if (!concurrentAi.tryAcquire()) {
@@ -111,7 +123,7 @@ public class ApiUsageGuard extends OncePerRequestFilter {
         return session != null
                 && session.getAttribute(GuestGraphScope.GRAPH_ATTRIBUTE)
                         instanceof String graph
-                && graph.matches("returntrail_guest_[a-f0-9]{32}");
+                && (GuestGraphLifecycle.isGuestGraph(graph) || com.returntrail.auth.AccountWorkspaceRepository.isAccountGraph(graph));
     }
 
     private void reject(

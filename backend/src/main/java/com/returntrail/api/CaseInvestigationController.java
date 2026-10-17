@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import com.returntrail.graph.CaseCatalogRepository;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
@@ -17,16 +19,21 @@ public class CaseInvestigationController {
             LoggerFactory.getLogger(CaseInvestigationController.class);
 
     private final CaseInvestigationAgent agent;
+    private final CaseCatalogRepository catalog;
 
-    public CaseInvestigationController(CaseInvestigationAgent agent) {
+    public CaseInvestigationController(CaseInvestigationAgent agent, CaseCatalogRepository catalog) {
+        this.catalog = catalog;
         this.agent = agent;
         log.info("INVESTIGATION DIAGNOSTICS V2 ENABLED");
     }
 
-    @PostMapping("/api/cases/CASE-001/investigate")
-    public InvestigationResponse investigate() {
+    @PostMapping("/api/cases/{caseId}/investigate")
+    public InvestigationResponse investigate(@PathVariable String caseId) {
+        catalog.requireCase(caseId);
         try {
-            return agent.investigate();
+            return agent.investigate(caseId);
+        } catch (org.springframework.web.server.ResponseStatusException exception) {
+            throw exception;
         } catch (RuntimeException exception) {
             if (exception instanceof IllegalStateException) {
                 log.warn("Case investigation failed: {} reason={}",

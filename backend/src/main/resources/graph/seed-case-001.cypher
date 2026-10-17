@@ -20,6 +20,7 @@ SET s2.claimedStatus = 'COURIER_UNAVAILABLE',
     s2.speakerRole = 'SUPPORT_AGENT'
 MERGE (c)-[:HAS_ORDER]->(o)
 MERGE (o)-[:CONTAINS]->(i)
+MERGE (c)-[:HAS_RETURN]->(r)
 MERGE (r)-[:RETURNS]->(i)
 MERGE (p)-[:ATTEMPTS]->(r)
 MERGE (s1)-[:ABOUT]->(p)

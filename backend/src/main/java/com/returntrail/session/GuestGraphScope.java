@@ -20,13 +20,11 @@ public class GuestGraphScope {
     }
 
     public String graphName() {
-        HttpSession session = requests.getObject().getSession(false);
-
-        if (session != null
-                && session.getAttribute(GRAPH_ATTRIBUTE) instanceof String graph
-                && graph.matches("returntrail_guest_[a-f0-9]{32}")) {
-            return graph;
-        }
+        var request=requests.getObject();
+        if(request.getAttribute(com.returntrail.auth.WorkspaceAccess.PINNED_GRAPH) instanceof String pinned
+                && (GuestGraphLifecycle.isGuestGraph(pinned) || com.returntrail.auth.AccountWorkspaceRepository.isAccountGraph(pinned))) return pinned;
+        String graph=com.returntrail.auth.WorkspaceAccess.authorizedGraph(request);
+        if(graph!=null)return graph;
 
         throw new ResponseStatusException(
                 HttpStatus.UNAUTHORIZED, "Create a guest session first.");

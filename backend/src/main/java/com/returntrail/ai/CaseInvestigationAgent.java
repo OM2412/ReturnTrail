@@ -7,6 +7,7 @@ import com.returntrail.graph.CaseClarificationRepository.ClarificationRow;
 import com.returntrail.graph.CaseEvidenceRepository;
 import com.returntrail.graph.CaseEvidenceRepository.EvidenceRow;
 import com.returntrail.investigation.PickupConflictDetector;
+import com.returntrail.investigation.FindingPolicy;
 import com.returntrail.investigation.PickupConflictDetector.Finding;
 import org.springframework.stereotype.Service;
 
@@ -14,8 +15,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class CaseInvestigationAgent {
@@ -39,13 +38,14 @@ public class CaseInvestigationAgent {
         this.clarificationRepository = clarificationRepository;
     }
 
-    public InvestigationResponse investigate() {
+    public InvestigationResponse investigate(String caseId) {
+        final long deadline=System.nanoTime()+java.time.Duration.ofSeconds(120).toNanos();
         List<Map<String, Object>> messages = new ArrayList<>();
 
         messages.add(Map.of(
                 "role", "system",
                 "content", """
-                        You investigate synthetic CASE-001 for ReturnTrail.
+                        You investigate a synthetic ReturnTrail case. The next user message names the authorized case.
                         Call tools in this order:
                         1. get_case_evidence
                         2. get_case_clarifications
@@ -70,14 +70,14 @@ public class CaseInvestigationAgent {
 
         messages.add(Map.of(
                 "role", "user",
-                "content", "Investigate CASE-001 using its saved graph context. "
+                "content", "Investigate " + caseId + " using its saved graph context. "
                         + "Prepare a local follow-up only if still pending."));
 
         List<Map<String, Object>> tools = List.of(
                 tool("get_case_evidence",
-                        "Read original source-linked CASE-001 evidence from FalkorDB."),
+                        "Read original source-linked case evidence from FalkorDB."),
                 tool("get_case_clarifications",
-                        "Read saved manual clarifications and linked task statuses. "
+                        "Read saved manual notes and the task status when each was recorded. "
                                 + "Call after get_case_evidence."),
                 tool("get_case_findings",
                         "Calculate historical findings and pendingFindings after "
@@ -110,7 +110,7 @@ public class CaseInvestigationAgent {
 
             if (nextTool == null) {
                 return new InvestigationResponse(
-                        "CASE-001", true, "AI_TOOL_CALLING", groq.model(),
+                        caseId, true, "AI_TOOL_CALLING", groq.model(),
                         turn, "DETERMINISTIC_FROM_TOOL_RESULTS",
                         CaseSummaryRenderer.render(
                                 evidence, findings, pendingFindings,
@@ -125,6 +125,7 @@ public class CaseInvestigationAgent {
                             ((Map<?, ?>) definition.get("function")).get("name")))
                     .toList();
 
+            if(System.nanoTime()>deadline)throw new IllegalStateException("Investigation time budget reached; refresh before retrying");
             Map<String, Object> response = groq.complete(Map.of(
                     "model", groq.model(),
                     "messages", messages,
@@ -180,11 +181,13 @@ public class CaseInvestigationAgent {
                 switch (name) {
                     case "get_case_evidence" -> {
                         if (!evidenceRead) {
-                            evidence = repository.findByCaseId("CASE-001");
+                            evidence = repository.findByCaseId(caseId);
                         }
                         evidenceRead = true;
                         resultCount = evidence.size();
-                        output = "Original FALKORDB evidence: " + evidence;
+                        output = "Original FALKORDB claims: " + evidence.stream().map(row -> Map.of(
+                                "caseId",row.caseId(),"pickupId",row.pickupId(),"evidenceId",row.evidenceId(),
+                                "claimedStatus",row.claimedStatus(),"quote",row.statement())).toList();
                     }
                     case "get_case_clarifications" -> {
                         if (!evidenceRead) {
@@ -193,7 +196,7 @@ public class CaseInvestigationAgent {
 
                         if (!clarificationsRead) {
                             clarifications = clarificationRepository
-                                    .findByCaseId("CASE-001");
+                                    .findByCaseId(caseId);
                         }
 
                         clarificationsRead = true;
@@ -201,7 +204,7 @@ public class CaseInvestigationAgent {
                         actionIds = clarifications.stream()
                                 .map(ClarificationRow::actionId).distinct().toList();
 
-                        output = "Saved manual clarification records: "
+                        output = "Saved manual clarification records (status is the task status at recording): "
                                 + clarifications
                                 + ". Notes are not independently verified. "
                                 + "Task status does not represent whole-case status.";
@@ -215,15 +218,7 @@ public class CaseInvestigationAgent {
                         if (!findingsRead) {
                             findings = detector.detect(evidence);
 
-                            Set<String> resolvedFindingIds = clarifications.stream()
-                                    .filter(row -> "RESOLVED".equals(row.status()))
-                                    .map(ClarificationRow::findingId)
-                                    .collect(Collectors.toSet());
-
-                            pendingFindings = findings.stream()
-                                    .filter(finding -> !resolvedFindingIds.contains(
-                                            finding.findingId()))
-                                    .toList();
+                            pendingFindings = FindingPolicy.pending(findings, clarifications);
                         }
 
                         findingsRead = true;
@@ -244,7 +239,7 @@ public class CaseInvestigationAgent {
                             List<ActionRow> saved = new ArrayList<>();
 
                             for (Finding finding : pendingFindings) {
-                                if (!"CASE-001".equals(finding.caseId())
+                                if (!caseId.equals(finding.caseId())
                                         || !"REQUIRES_CLARIFICATION".equals(
                                                 finding.status())) {
                                     throw new IllegalStateException(

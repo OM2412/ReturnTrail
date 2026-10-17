@@ -25,58 +25,41 @@ public class CaseActionRepository {
     }
 
     public ActionRow createFollowup(Finding finding) {
-        String actionId = "FOLLOWUP-" + finding.findingId();
+        String actionId = "FOLLOWUP-" + finding.findingId() + "-" + finding.evidenceRevision().substring(0,16);
 
         String query = """
-                MATCH (c:Case {id:$caseId})
-                MERGE (a:Action {id:$actionId})
-                ON CREATE SET a.status = 'OPEN',
-                              a.type = 'REQUEST_PICKUP_CLARIFICATION',
-                              a.question = $question,
-                              a.findingId = $findingId,
-                              a.pickupId = $pickupId,
-                              a.createdAt = $createdAt,
-                              a.synthetic = true
-                MERGE (c)-[:HAS_ACTION]->(a)
-                RETURN a.id AS actionId,
-                       a.status AS status,
-                       a.question AS question,
-                       a.createdAt AS createdAt
-                """;
-
-        Map<String, Object> params = Map.of(
-                "caseId", finding.caseId(),
-                "actionId", actionId,
-                "question", finding.questionToAsk(),
-                "findingId", finding.findingId(),
-                "pickupId", finding.pickupId(),
-                "createdAt", Instant.now().toString());
-
-        List<ActionRow> saved = readRows(
-                driver.graph(graphScope.graphName()).query(query, params));
-
-        if (saved.size() != 1) {
-            throw new IllegalStateException("Could not save one case action");
-        }
-
-        String linkQuery = """
-                MATCH (c:Case {id:$caseId})-[:HAS_ACTION]->(a:Action {id:$actionId})
-                MATCH (c)-[:HAS_ORDER]->(:Order)-[:CONTAINS]->(i:Item)
-                MATCH (p:PickupAttempt {id:$pickupId})-[:ATTEMPTS]->(:ReturnRequest)-[:RETURNS]->(i)
-                MATCH (:SupportStatement)-[:ABOUT]->(p)
+                MATCH (c:Case {id:$caseId})-[:HAS_RETURN]->(r:ReturnRequest)
+                MATCH (p:PickupAttempt {id:$pickupId})-[:ATTEMPTS]->(r)
                 MATCH (s:SupportStatement)-[:ABOUT]->(p)
                 MATCH (s)-[:RECORDED_IN]->(d:EvidenceDocument)
-                WHERE d.id IN $evidenceIds
-                MERGE (a)-[:REFERENCES]->(d)
+                WITH c, collect(DISTINCT d) AS documents
+                WHERE size(documents) = size($evidenceIds) AND size(documents) > 0
+                  AND all(document IN documents WHERE document.id IN $evidenceIds)
+                OPTIONAL MATCH (prior:Action {id:$actionId})
+                WITH c, documents, prior
+                MERGE (a:Action {id:$actionId})
+                ON CREATE SET a.status = 'OPEN', a.type = $type,
+                              a.question = $question, a.findingId = $findingId,
+                              a.pickupId = $pickupId, a.createdAt = $createdAt, a.synthetic = true, a.evidenceRevision = $evidenceRevision
+                MERGE (c)-[:HAS_ACTION]->(a)
+                FOREACH (document IN documents | MERGE (a)-[:REFERENCES]->(document))
+                SET c.workflowVersion = CASE WHEN prior IS NULL THEN coalesce(c.workflowVersion,0)+1 ELSE coalesce(c.workflowVersion,0) END
+                RETURN a.id AS actionId, a.status AS status, a.findingId AS findingId,
+                       a.evidenceRevision AS evidenceRevision, a.pickupId AS pickupId,
+                       $evidenceIds AS evidenceIds, a.question AS question, a.createdAt AS createdAt
                 """;
-
-        driver.graph(graphScope.graphName()).query(linkQuery, Map.of(
-                "caseId", finding.caseId(),
-                "actionId", actionId,
-                "pickupId", finding.pickupId(),
-                "evidenceIds", finding.evidence().stream()
-                        .map(CaseEvidenceRepository.EvidenceRow::evidenceId)
-                        .distinct().toList()));
+        var params = new java.util.HashMap<String, Object>();
+        params.put("caseId", finding.caseId()); params.put("actionId", actionId);
+        params.put("question", finding.questionToAsk()); params.put("findingId", finding.findingId());
+        params.put("pickupId", finding.pickupId()); params.put("createdAt", Instant.now().toString());
+        params.put("evidenceRevision", finding.evidenceRevision());
+        params.put("type", "PICKUP_CONTEXT_INCOMPLETE".equals(finding.type())
+                ? "REQUEST_MISSING_CONTEXT" : "REQUEST_PICKUP_CLARIFICATION");
+        params.put("evidenceIds", finding.evidence().stream()
+                .map(CaseEvidenceRepository.EvidenceRow::evidenceId).distinct().toList());
+        List<ActionRow> saved = readRows(driver.graph(graphScope.graphName()).query(query, params));
+        if (saved.size() != 1) throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.CONFLICT, "Evidence changed during the investigation. Refresh before running again.");
 
         return saved.get(0);
     }
@@ -84,7 +67,9 @@ public class CaseActionRepository {
     public List<ActionRow> findByCaseId(String caseId) {
         String query = """
                 MATCH (:Case {id:$caseId})-[:HAS_ACTION]->(a:Action)
-                RETURN a.id AS actionId,
+                OPTIONAL MATCH (a)-[:REFERENCES]->(d:EvidenceDocument)
+                RETURN a.findingId AS findingId, coalesce(a.evidenceRevision,'') AS evidenceRevision,
+                       a.pickupId AS pickupId, collect(DISTINCT d.id) AS evidenceIds, a.id AS actionId,
                        a.status AS status,
                        a.question AS question,
                        a.createdAt AS createdAt
@@ -103,16 +88,25 @@ public class CaseActionRepository {
                     record.getValue("actionId"),
                     record.getValue("status"),
                     record.getValue("question"),
-                    record.getValue("createdAt")));
+                    record.getValue("createdAt"), record.getValue("findingId"),
+                    record.getValue("evidenceRevision"), record.getValue("pickupId"),
+                    stringList(record.getValue("evidenceIds"))));
         }
 
         return List.copyOf(rows);
     }
 
+    private List<String> stringList(Object value) {
+        if (!(value instanceof List<?> list)) return List.of();
+        return list.stream().filter(java.util.Objects::nonNull).map(Object::toString).sorted().toList();
+    }
     public record ActionRow(
             String actionId,
             String status,
             String question,
-            String createdAt) {
+            String createdAt, String findingId, String evidenceRevision, String pickupId, List<String> evidenceIds) {
+        public ActionRow(String actionId,String status,String question,String createdAt) {
+            this(actionId,status,question,createdAt,"","","",List.of());
+        }
     }
 }

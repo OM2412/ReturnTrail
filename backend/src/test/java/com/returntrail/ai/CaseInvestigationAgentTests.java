@@ -60,7 +60,7 @@ class CaseInvestigationAgentTests {
     }
     @Test void ordersRequiredToolsWithoutExtraFinalModelRequest() {
         seed(); obey();
-        var result = agent.investigate();
+        var result = agent.investigate("CASE-001");
         assertEquals(List.of("get_case_evidence", "get_case_clarifications",
                 "get_case_findings", "prepare_followup_action"), requestedTools);
         assertEquals(4, result.modelRequests());
@@ -76,9 +76,9 @@ class CaseInvestigationAgentTests {
         String id = detector.detect(rows).get(0).findingId();
         when(clarifications.findByCaseId("CASE-001")).thenReturn(List.of(
                 new ClarificationRow("A1", id, "RESOLVED", "N1",
-                        "Manual", "MANUAL_SYNTHETIC_CLARIFICATION", "time")));
+                        "Manual", "MANUAL_SYNTHETIC_CLARIFICATION", "time", detector.detect(rows).getFirst().evidenceRevision())));
         obey();
-        var result = agent.investigate();
+        var result = agent.investigate("CASE-001");
         assertEquals(3, result.modelRequests());
         assertEquals(1, result.findings().size());
         assertTrue(result.pendingFindings().isEmpty());
@@ -91,13 +91,13 @@ class CaseInvestigationAgentTests {
                 new ClarificationRow("OTHER", "unrelated", "RESOLVED", "N2",
                         "Other", "MANUAL_SYNTHETIC_CLARIFICATION", "time")));
         obey();
-        assertEquals(1, agent.investigate().pendingFindings().size());
+        assertEquals(1, agent.investigate("CASE-001").pendingFindings().size());
         verify(actions, times(1)).createFollowup(any());
     }
     @Test void prematureTextCannotBypassRequiredRead() {
         seed();
         when(groq.complete(anyMap())).thenReturn(response(Map.of("content", "Finished")));
-        var error = assertThrows(IllegalStateException.class, agent::investigate);
+        var error = assertThrows(IllegalStateException.class, () -> agent.investigate("CASE-001"));
         assertTrue(error.getMessage().contains("get_case_evidence"));
         verify(evidence, never()).findByCaseId(any());
         verify(actions, never()).createFollowup(any());
@@ -106,7 +106,7 @@ class CaseInvestigationAgentTests {
         seed();
         when(groq.complete(anyMap())).thenReturn(response(Map.of("tool_calls",
                 List.of(call("prepare_followup_action", "{}")))));
-        assertThrows(IllegalStateException.class, agent::investigate);
+        assertThrows(IllegalStateException.class, () -> agent.investigate("CASE-001"));
         verify(evidence, never()).findByCaseId(any());
         verify(actions, never()).createFollowup(any());
     }
@@ -115,7 +115,7 @@ class CaseInvestigationAgentTests {
         when(groq.complete(anyMap())).thenReturn(response(Map.of("tool_calls",
                 List.of(call("get_case_evidence", "{}"),
                         call("prepare_followup_action", "{}")))));
-        assertThrows(IllegalStateException.class, agent::investigate);
+        assertThrows(IllegalStateException.class, () -> agent.investigate("CASE-001"));
         verify(evidence, never()).findByCaseId(any());
         verify(actions, never()).createFollowup(any());
     }
@@ -123,7 +123,7 @@ class CaseInvestigationAgentTests {
         seed();
         when(groq.complete(anyMap())).thenReturn(response(Map.of("tool_calls",
                 List.of(call("issue_refund", "{}")))));
-        assertThrows(IllegalStateException.class, agent::investigate);
+        assertThrows(IllegalStateException.class, () -> agent.investigate("CASE-001"));
         verify(evidence, never()).findByCaseId(any());
         verify(actions, never()).createFollowup(any());
     }
@@ -138,7 +138,7 @@ class CaseInvestigationAgentTests {
             }
             return response(Map.of("tool_calls", List.of(call(name, "{}"))));
         });
-        var error = assertThrows(IllegalStateException.class, agent::investigate);
+        var error = assertThrows(IllegalStateException.class, () -> agent.investigate("CASE-001"));
         assertTrue(error.getMessage().contains("prepare_followup_action"));
         verify(evidence, times(1)).findByCaseId("CASE-001");
         verify(actions, never()).createFollowup(any());
@@ -147,17 +147,42 @@ class CaseInvestigationAgentTests {
         seed();
         when(groq.complete(anyMap())).thenReturn(response(Map.of("tool_calls",
                 List.of(call("get_case_evidence", "{\"caseId\":\"OTHER\"}")))));
-        assertThrows(IllegalStateException.class, agent::investigate);
+        assertThrows(IllegalStateException.class, () -> agent.investigate("CASE-001"));
         verify(evidence, never()).findByCaseId(any());
     }
     @Test void emptyEvidenceDoesNotPrepareAction() {
         seed();
         when(evidence.findByCaseId("CASE-001")).thenReturn(List.of());
         obey();
-        var result = agent.investigate();
+        var result = agent.investigate("CASE-001");
         assertEquals(3, result.modelRequests());
         assertTrue(result.actions().isEmpty());
         assertTrue(result.summary().contains("cannot be assessed"));
         verify(actions, never()).createFollowup(any());
     }
+    @Test void anotherCaseWithoutConflictDoesNotPrepareAnAction() {
+        seed(); obey();
+        when(evidence.findByCaseId("CASE-002")).thenReturn(List.of(
+                new EvidenceRow("CASE-002", "P2-A", "CUSTOMER_CANCELLED", "Attempt A", "D3"),
+                new EvidenceRow("CASE-002", "P2-B", "COURIER_UNAVAILABLE", "Attempt B", "D4")));
+        when(clarifications.findByCaseId("CASE-002")).thenReturn(List.of());
+        var result = agent.investigate("CASE-002");
+        assertEquals("CASE-002", result.caseId());
+        assertEquals(3, result.modelRequests());
+        assertTrue(result.pendingFindings().isEmpty());
+        verify(actions, never()).createFollowup(any());
+    }
+    @Test void unknownReasonPreparesMissingContextRatherThanDisagreement() {
+        seed(); obey();
+        when(evidence.findByCaseId("CASE-003")).thenReturn(List.of(
+                new EvidenceRow("CASE-003", "P3", "UNKNOWN", "Reason missing", "D5")));
+        when(clarifications.findByCaseId("CASE-003")).thenReturn(List.of());
+        var result = agent.investigate("CASE-003");
+        assertEquals(4, result.modelRequests());
+        assertEquals("PICKUP_CONTEXT_INCOMPLETE", result.findings().get(0).type());
+        assertTrue(result.summary().contains("Historical disagreements: 0."));
+        assertTrue(result.summary().contains("Missing-context findings: 1."));
+        verify(actions).createFollowup(argThat(f -> "CASE-003".equals(f.caseId())));
+    }
+
 }

@@ -33,7 +33,7 @@ public class GroqClient {
         JdkClientHttpRequestFactory factory =
                 new JdkClientHttpRequestFactory(httpClient);
 
-        factory.setReadTimeout(Duration.ofSeconds(60));
+        factory.setReadTimeout(Duration.ofSeconds(25));
 
         this.client = RestClient.builder()
                 .baseUrl("https://api.groq.com/openai/v1")

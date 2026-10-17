@@ -33,9 +33,11 @@ public final class CaseSummaryRenderer {
         }
 
         text.append("\nHistorical disagreements: ")
-                .append(findings.size()).append(".\n");
+                .append(findings.stream().filter(f -> "PICKUP_REASON_DISAGREEMENT".equals(f.type())).count()).append(".\n");
+        long gaps = findings.stream().filter(f -> "PICKUP_CONTEXT_INCOMPLETE".equals(f.type())).count();
+        if (gaps > 0) text.append("Missing-context findings: ").append(gaps).append(".\n");
 
-        if (!findings.isEmpty()) {
+        if (findings.stream().anyMatch(f -> "PICKUP_REASON_DISAGREEMENT".equals(f.type()))) {
             text.append("These disagreements remain in the original evidence.\n");
         }
 
@@ -46,7 +48,8 @@ public final class CaseSummaryRenderer {
                 text.append("- ").append(row.clarificationId())
                         .append(" is linked to follow-up task ")
                         .append(row.actionId())
-                        .append("; task status: ").append(row.status())
+                        .append("; task status when recorded: ").append(row.status())
+                        .append("; reviewed source revision: ").append(row.evidenceRevision().isBlank()?"unversioned":row.evidenceRevision())
                         .append(".\n");
             }
 

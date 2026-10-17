@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import com.returntrail.graph.CaseCatalogRepository;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -14,6 +16,8 @@ import java.util.List;
 
 @RestController
 public class CaseFindingsController {
+
+    private final CaseCatalogRepository catalog;
 
     private static final Logger log =
             LoggerFactory.getLogger(CaseFindingsController.class);
@@ -23,17 +27,19 @@ public class CaseFindingsController {
 
     public CaseFindingsController(
             CaseEvidenceRepository repository,
-            PickupConflictDetector detector) {
+            PickupConflictDetector detector, CaseCatalogRepository catalog) {
+        this.catalog = catalog;
         this.repository = repository;
         this.detector = detector;
     }
 
-    @GetMapping("/api/cases/CASE-001/findings")
-    public FindingsResponse findings() {
+    @GetMapping("/api/cases/{caseId}/findings")
+    public FindingsResponse findings(@PathVariable String caseId) {
+        catalog.requireCase(caseId);
         List<Finding> findings;
 
         try {
-            findings = detector.detect(repository.findByCaseId("CASE-001"));
+            findings = detector.detect(repository.findByCaseId(caseId));
         } catch (RuntimeException exception) {
             log.error("Failed to evaluate synthetic Case 1 evidence", exception);
             throw new ResponseStatusException(
@@ -42,7 +48,7 @@ public class CaseFindingsController {
         }
 
         return new FindingsResponse(
-                "CASE-001",
+                caseId,
                 true,
                 "DETERMINISTIC_VALIDATION",
                 findings.size(),

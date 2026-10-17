@@ -35,7 +35,7 @@ public class GuestSessionController {
         this.lifecycle = lifecycle;
 
         try (var input = new ClassPathResource(
-                "graph/seed-case-001.cypher").getInputStream()) {
+                "graph/seed-demo-workspace.cypher").getInputStream()) {
             this.seedQuery = new String(
                     input.readAllBytes(), StandardCharsets.UTF_8);
         }
@@ -43,6 +43,8 @@ public class GuestSessionController {
 
     @PostMapping("/api/guest-sessions")
     public GuestSessionResponse create(HttpServletRequest request) {
+        if(com.returntrail.auth.WorkspaceAccess.identity()!=null)throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "Your saved workspace is already open. Sign out before creating a separate guest demo.");
         HttpSession session = request.getSession(true);
 
         synchronized (session) {
@@ -74,6 +76,7 @@ public class GuestSessionController {
 
                 session.setAttribute(
                         GuestGraphScope.GRAPH_ATTRIBUTE, graphName);
+                session.setAttribute(com.returntrail.auth.WorkspaceAccess.BINDING_REFERENCE, UUID.randomUUID().toString());
 
                 return new GuestSessionResponse(
                         "READY", "CASE-001", true, true);
@@ -92,6 +95,8 @@ public class GuestSessionController {
     @DeleteMapping("/api/guest-sessions")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void end(HttpServletRequest request) {
+        if(com.returntrail.auth.WorkspaceAccess.identity()!=null)throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "Use sign out for a saved workspace. Reset does not delete account records.");
         HttpSession session = request.getSession(false);
         if (session != null) {
             session.invalidate();
