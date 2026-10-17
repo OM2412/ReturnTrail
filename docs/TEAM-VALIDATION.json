@@ -1,0 +1,139 @@
+{
+  "release": "team-polish-1",
+  "dateIST": "2026-10-17",
+  "requires": "context-upgrade-1",
+  "backend": {
+    "tests": 90,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 2,
+    "passed": 88
+  },
+  "frontendUnitTests": 14,
+  "lint": "PASS",
+  "productionBuild": "PASS",
+  "browserGroups": [
+    {
+      "suite": "public-default",
+      "scope": "Mocked auth; no video configured",
+      "groups": 7,
+      "passed": [
+        "Landing shows both real supplied portraits and correctly labeled GitHub/LinkedIn destination links with icons; repo link also has its GitHub mark",
+        "About is a separate reloadable public route; native FAQ opens by keyboard and explains the synthetic-data boundary",
+        "An absent video URL hides the entire video feature without a blank card, dead link or YouTube request",
+        "Landing and About fit 320/390/768/1024/1440px with reduced motion; photos reserve dimensions and profile links stay reachable",
+        "Landing and About have no serious/critical axe WCAG A/AA findings in the scanned desktop state; not a full accessibility certification",
+        "A missing portrait falls back to the member initials while name, role and profile links remain usable",
+        "Public browsing does not create a guest workspace or send a write; no uncaught browser errors"
+      ]
+    },
+    {
+      "suite": "public-video",
+      "scope": "Mocked auth and player network; fixture URL",
+      "groups": 5,
+      "passed": [
+        "Landing shows both real supplied portraits and correctly labeled GitHub/LinkedIn destination links with icons; repo link also has its GitHub mark",
+        "About is a separate reloadable public route; native FAQ opens by keyboard and explains the synthetic-data boundary",
+        "Configured fixture video makes no third-party request before explicit load; the player uses the allowlisted privacy-enhanced origin without autoplay (player network mocked)",
+        "A configured video appears in the hero, walkthrough and footer; its settings are public and contain no credentials",
+        "Public browsing does not create a guest workspace or send a write; no uncaught browser errors"
+      ]
+    },
+    {
+      "suite": "browser-contract",
+      "scope": "Mocked application APIs",
+      "groups": 23,
+      "passed": [
+        "Landing document selection updates the indicator",
+        "CTA opens a dedicated overview with one isolated session",
+        "Dedicated evidence reader, URL selection and shared-pickup comparison",
+        "Deep-link refresh preserves session and selected source",
+        "Browser Back/Forward preserves route navigation",
+        "Connections selection synchronizes URL and actual source inspector",
+        "AI runs only on click, then shows grounded summary and returned tool trace",
+        "Clarification resolves task, refreshes state and safely renders note text",
+        "Task references expand on demand and copy the exact saved ID",
+        "Page refresh preserves the resolved task and manual reply without creating another guest",
+        "History contains only saved task and clarification events",
+        "Old result is invalidated after clarification; re-investigation uses resolved context",
+        "All six workspace routes fit at 390px, including resolved task and history",
+        "All six routes also fit at 320px, 768px and 1024px",
+        "429 response is visible and never silently retried",
+        "Expired session clears old data and requires explicit recovery",
+        "Reset dialog supports cancellation without deleting session",
+        "390px mobile navigation and evidence layout have no horizontal overflow",
+        "Unknown routes show a useful recovery page",
+        "Real WebGL unboxing advances to connections and supports pause/replay",
+        "Reduced motion shows all evidence without automatic movement",
+        "WebGL-unavailable fallback preserves demo access",
+        "No uncaught browser JavaScript errors"
+      ]
+    },
+    {
+      "suite": "auth-ui",
+      "scope": "Mocked auth APIs",
+      "groups": 7,
+      "passed": [
+        "Lamp supports click, keyboard and a real pull gesture; sign-in does not load the WebGL bundle",
+        "Both lamp states fit 320,390,768 and1440 pixels; sign-in controls remain available with the light off",
+        "Legacy login URL redirects; guest entry creates a separate workspace and sign-in offers a guest export link",
+        "Unavailable session check can recover; configured sign-in points only to the server OAuth endpoint",
+        "Account view escapes profile text; CSRF-protected logout clears UI identity and anonymous account routes return to sign-in",
+        "Guest entry remains first; Google can be enabled independently and account UI identifies the correct provider without a GitHub handle",
+        "Cancelled/failed sign-in has a recovery message; no uncaught browser errors"
+      ]
+    }
+  ],
+  "totalBrowserGroups": 42,
+  "production": {
+    "count": 5,
+    "passed": [
+      "Combined Spring JAR serves the public About deep link while case data remains session-protected and private shells are noindex",
+      "Public sitemap includes About, privacy covers optional video, web portraits load and documentation originals are not publicly served",
+      "Production Home/About navigation updates public canonical metadata correctly and the unset video stays absent",
+      "About entry creates a real isolated guest workspace through CSRF-protected UI; its case loads from actual FalkorDB and private metadata is restored",
+      "Production public-to-workspace flow has no uncaught JavaScript error and makes no model request"
+    ],
+    "errors": [],
+    "scope": "Combined production JAR and real FalkorDB. No real Google credentials or YouTube video supplied."
+  },
+  "accessibility": [
+    {
+      "route": "/",
+      "violations": []
+    },
+    {
+      "route": "/about",
+      "violations": []
+    }
+  ],
+  "photoBytes": {
+    "om.webp": 127998,
+    "ajeet.webp": 27976
+  },
+  "liveModelCalls": 0,
+  "realYouTubePlaybackTested": false,
+  "externalGoogleTestedByThisWorkspace": false,
+  "windowsPowerShellTested": false,
+  "notes": [
+    "The user reported local Google/workspace checks working; credentials were not accessed here.",
+    "Photos and profile links were supplied by the user.",
+    "Public/video assertion groups overlap across two configurations.",
+    "No remote push, deployment or author-setting change."
+  ],
+  "installer": {
+    "count": 9,
+    "passed": [
+      "Context baseline installs/restores exact bytes and preserves staging, unrelated files and local environment settings",
+      "Repeated install remains idempotent; the first backup restores the prior source",
+      "CRLF source is accepted and rollback restores its exact line-ending bytes",
+      "Unknown local source edits block all install writes",
+      "A corrupted copy of the payload cannot write any source",
+      "Rollback protects text edited after installation",
+      "Rollback protects binary portrait edits after installation",
+      "An earlier unupgraded checkout is rejected before writes",
+      "An existing conflicting new-file portrait is preserved by preflight"
+    ],
+    "scope": "PowerShell 7.6.7 on Linux; isolated Git worktrees; -SkipChecks; not Windows execution"
+  }
+}

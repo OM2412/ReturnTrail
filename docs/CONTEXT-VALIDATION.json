@@ -1,0 +1,351 @@
+{
+  "release": "context-upgrade-1",
+  "dateIST": "2026-10-17",
+  "backendDefault": {
+    "tests": 90,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 2,
+    "passed": 88,
+    "suites": [
+      {
+        "suite": "com.returntrail.ReturnTrailApplicationTests",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.ai.CaseInvestigationAgentTests",
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.ai.CaseSummaryRendererTests",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.api.CaseClarificationControllerTests",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.api.CaseWorkspaceControllerTests",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.api.EvidenceCaptureControllerTests",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.auth.AccountLoginSuccessTests",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.auth.AccountOAuthLiveTests",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      {
+        "suite": "com.returntrail.auth.GoogleIdentityTests",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.auth.GoogleOidcLiveTests",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      {
+        "suite": "com.returntrail.auth.ProviderRegistrationTests",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.auth.WorkspaceAccessTests",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.graph.FalkorDbHealthTests",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.investigation.ContextCoverageTests",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.investigation.EvidenceRevisionTests",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.investigation.FindingPolicyTests",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.investigation.PickupConflictDetectorTests",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.investigation.PickupEvaluationTests",
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.session.ApiUsageGuardTests",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.session.GuestGraphLifecycleTests",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.returntrail.session.GuestGraphScopeTests",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "localProviderIntegrations": [
+    {
+      "name": "com.returntrail.auth.AccountOAuthLiveTests",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.returntrail.auth.GoogleOidcLiveTests",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "frontendUnitTests": 12,
+  "frontendLint": "PASS",
+  "productionBuild": "PASS",
+  "realApiGroups": {
+    "passes": [
+      "Combined production JAR serves public metadata, static guides, private SPA deep links and immutable hashed assets from one origin",
+      "Seeded explanation covers exactly its current source revision",
+      "New evidence creates fresh review context; retry reuses one immutable source and preserves earlier resolved task",
+      "Old-task replies are rejected; current revision prepares or reuses a separate source-linked task",
+      "Unknown notes stay OPEN; explicit explanation covers only reviewed revision; reply retries preserve historical status",
+      "Stale version, cross-case pickup, paraphrased quote, non-fictional flag and oversized requests cannot write",
+      "Concurrent imports at one expected version allow one commit; prior immutable reply remains retryable",
+      "Fresh brief preserves exact source text and seven-link proof; imports do not leak across guests or cases",
+      "Thirty-source case cap is enforced atomically in the database query",
+      "Spring Security OAuth callback, PKCE/state, session rotation, CSRF, saved relogin and account isolation passed with local provider",
+      "Read-only counterfactual, source-set memory coverage, missing/foreign sources and unchanged versions verified on actual FalkorDB",
+      "Readiness includes a responding FalkorDB module without disclosing graph names",
+      "Unavailable graph marks readiness DOWN while liveness remains UP"
+    ],
+    "passed": 13,
+    "liveModelCalls": 0
+  },
+  "browserGroups": [
+    {
+      "suite": "context",
+      "scope": "Real Spring/FalkorDB and axe",
+      "count": 7,
+      "passed": [
+        "Counterfactual changes the supported finding through a read-only graph path; original sources, versions and tasks stay unchanged; foreign source is rejected",
+        "Explicit rule review prepares the real local source-linked task without an AI call or a fabricated AI trace",
+        "Separate pickup attempts do not become a same-attempt disagreement in the baseline or preview",
+        "New source is visibly outside the earlier saved task's REFERENCES set while its historical resolved status remains intact",
+        "Fresh brief offers a clearly fictional support draft linked to the active case and sources; no external send occurs",
+        "Context lab fits 320/390/768px, direct links reload, and no uncaught browser error or model request occurs",
+        "Five representative live routes have no serious/critical axe WCAG A/AA findings; this is not a full accessibility certification"
+      ]
+    },
+    {
+      "suite": "workspace",
+      "scope": "Real Spring/FalkorDB",
+      "count": 10,
+      "passed": [
+        "Real guest workspace displays four database-backed scenario cards",
+        "Real proof explains why different attempts are excluded and lists seven matched links",
+        "Evidence comparison includes only the selected pickup attempt",
+        "Real unknown reply preserves the pending question and safely renders source text",
+        "Explicit explanation resolves only its task and retains both manual notes and original evidence",
+        "Case-specific deep-link refresh retains saved events",
+        "Case switching and source links preserve case scope without leaking replies",
+        "Library, proof, overview, tasks and history fit at 320,390,768,1024 and1440 pixels",
+        "Unknown case does not display the previous cases records",
+        "Real API browser workflow has no uncaught JavaScript errors"
+      ]
+    },
+    {
+      "suite": "evidence",
+      "scope": "Real Spring/FalkorDB",
+      "count": 6,
+      "passed": [
+        "Inbox requires an exact quote, shows the full original and safely renders script-shaped text",
+        "Successful save remains acknowledged after a failed refresh; one source and earlier reply survive recovery",
+        "New evidence needs review; fresh task keeps unknown reply OPEN and history includes source arrival",
+        "Fresh case brief downloads structured sources, versions, history and prints to a readable report",
+        "Inbox, brief and existing evidence workflows fit 320,390,768 and1440 pixels with long source IDs",
+        "Evidence workflow has no uncaught browser errors"
+      ]
+    },
+    {
+      "suite": "browser_contract",
+      "scope": "Mocked API contracts",
+      "count": 23,
+      "passed": [
+        "Landing document selection updates the indicator",
+        "CTA opens a dedicated overview with one isolated session",
+        "Dedicated evidence reader, URL selection and shared-pickup comparison",
+        "Deep-link refresh preserves session and selected source",
+        "Browser Back/Forward preserves route navigation",
+        "Connections selection synchronizes URL and actual source inspector",
+        "AI runs only on click, then shows grounded summary and returned tool trace",
+        "Clarification resolves task, refreshes state and safely renders note text",
+        "Task references expand on demand and copy the exact saved ID",
+        "Page refresh preserves the resolved task and manual reply without creating another guest",
+        "History contains only saved task and clarification events",
+        "Old result is invalidated after clarification; re-investigation uses resolved context",
+        "All six workspace routes fit at 390px, including resolved task and history",
+        "All six routes also fit at 320px, 768px and 1024px",
+        "429 response is visible and never silently retried",
+        "Expired session clears old data and requires explicit recovery",
+        "Reset dialog supports cancellation without deleting session",
+        "390px mobile navigation and evidence layout have no horizontal overflow",
+        "Unknown routes show a useful recovery page",
+        "Real WebGL unboxing advances to connections and supports pause/replay",
+        "Reduced motion shows all evidence without automatic movement",
+        "WebGL-unavailable fallback preserves demo access",
+        "No uncaught browser JavaScript errors"
+      ]
+    },
+    {
+      "suite": "auth_ui",
+      "scope": "Mocked auth APIs",
+      "count": 7,
+      "passed": [
+        "Lamp supports click, keyboard and a real pull gesture; sign-in does not load the WebGL bundle",
+        "Both lamp states fit 320,390,768 and1440 pixels; sign-in controls remain available with the light off",
+        "Legacy login URL redirects; guest entry creates a separate workspace and sign-in offers a guest export link",
+        "Unavailable session check can recover; configured sign-in points only to the server OAuth endpoint",
+        "Account view escapes profile text; CSRF-protected logout clears UI identity and anonymous account routes return to sign-in",
+        "Guest entry remains first; Google can be enabled independently and account UI identifies the correct provider without a GitHub handle",
+        "Cancelled/failed sign-in has a recovery message; no uncaught browser errors"
+      ]
+    },
+    {
+      "suite": "active_case_export",
+      "scope": "Mocked active-case auth export",
+      "count": 1,
+      "passed": [
+        "Active guest case preserved in the sign-in export link"
+      ]
+    }
+  ],
+  "browserGroupCount": 54,
+  "accessibility": [
+    {
+      "route": "/signin",
+      "violations": []
+    },
+    {
+      "route": "/case/CASE-004",
+      "violations": []
+    },
+    {
+      "route": "/case/CASE-004/context",
+      "violations": []
+    },
+    {
+      "route": "/case/CASE-004/brief",
+      "violations": []
+    },
+    {
+      "route": "/case/CASE-004/investigation",
+      "violations": []
+    }
+  ],
+  "installer": {
+    "passed": [
+      "Public baseline install and exact byte rollback preserve unrelated and staged files",
+      "Reinstallation is idempotent and first exact backup restores original files",
+      "CRLF baseline accepted and restored byte-for-byte",
+      "Local source edits block all install writes",
+      "Payload corruption blocks all source writes",
+      "Rollback refuses to overwrite post-install edits",
+      "Prior workspace baseline installs and rolls back with its exact file bytes",
+      "Prior evidence workflow baseline installs and rolls back with exact original bytes",
+      "Prior lamp-login baseline installs and restores exact source bytes",
+      "Binary asset changes are detected and protected by rollback preflight"
+    ],
+    "count": 10,
+    "runtime": "PowerShell 7.6.7 on Linux, isolated Git worktrees, -SkipChecks; not Windows execution"
+  },
+  "productionNpmAudit": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "liveModelCalls": 0,
+  "externalGoogleTested": false,
+  "externalGitHubTested": false,
+  "hostedDeploymentTested": false,
+  "windowsPowerShellTested": false,
+  "hostedGithubActionsTested": false,
+  "limitation": "Automated implementation checks and local provider simulations. Not a judge score, security/accessibility certification, market validation or production uptime claim.",
+  "regressionScope": "Full six browser suites passed. After the mobile-only lamp paint simplification, auth and Context/axe suites plus production JAR/API/readiness checks were rerun; unrelated backend/workspace/inbox logic was unchanged."
+}
