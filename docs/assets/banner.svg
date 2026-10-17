@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">ReturnTrail — Return drama? Follow the receipts.</title>
+  <desc id="desc">A dark plum and pastel banner connects two illustrated source documents to a parcel. This is a brand illustration, not a query result.</desc>
+  <defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M 32 0 L 0 0 0 32" fill="none" stroke="#ffffff" stroke-opacity=".045"/></pattern></defs>
+  <rect width="1200" height="360" rx="24" fill="#272233"/>
+  <rect width="1200" height="360" rx="24" fill="url(#grid)"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <rect x="44" y="39" width="212" height="30" rx="8" fill="#dafa8b"/>
+    <text x="59" y="59" font-size="12" font-weight="700" letter-spacing="1.6" fill="#272233">CONNECTED BY CONTEXT</text>
+    <text x="44" y="137" font-size="68" font-weight="800" letter-spacing="-2.5" fill="#f8f5ff">ReturnTrail<tspan fill="#ffcea9">.</tspan></text>
+    <text x="47" y="194" font-size="31" font-weight="700" fill="#dafa8b">Return drama? Follow the receipts.</text>
+    <text x="47" y="237" font-size="18" fill="#d5cce3">Two records. One pickup. A clearer next question.</text>
+    <text x="47" y="310" font-size="12" letter-spacing="1.5" fill="#bdb1cd">FALKORDB GRAPH CONTEXT  /  FICTIONAL PRACTICE CASES</text>
+    <path d="M845 140 C 867 144 863 236 930 240 M1078 140 C 1050 160 1040 234 993 240" fill="none" stroke="#dafa8b" stroke-width="3" stroke-dasharray="7 7"/>
+    <g transform="translate(760 64) rotate(-8 70 68)">
+      <rect x="5" y="7" width="138" height="140" rx="15" fill="#15121d"/>
+      <rect width="138" height="140" rx="15" fill="#ffcea9"/>
+      <path d="M22 22h26l9 9v29H22z M48 22v11h9 M29 42h21 M29 49h16" fill="none" stroke="#272233" stroke-width="2" stroke-linejoin="round"/>
+      <text x="20" y="83" fill="#554254" font-size="11">SOURCE A</text>
+      <text x="20" y="106" fill="#272233" font-size="15" font-weight="700">You cancelled?</text>
+    </g>
+    <g transform="translate(995 64) rotate(9 70 68)">
+      <rect x="5" y="7" width="138" height="140" rx="15" fill="#15121d"/>
+      <rect width="138" height="140" rx="15" fill="#d6c6f1"/>
+      <path d="M22 22h26l9 9v29H22z M48 22v11h9 M29 42h21 M29 49h16" fill="none" stroke="#272233" stroke-width="2" stroke-linejoin="round"/>
+      <text x="20" y="83" fill="#554254" font-size="11">SOURCE B</text>
+      <text x="20" y="106" fill="#272233" font-size="15" font-weight="700">No courier?</text>
+    </g>
+    <g transform="translate(907 216) rotate(-4 50 46)">
+      <rect x="5" y="7" width="104" height="93" rx="18" fill="#15121d"/>
+      <rect width="104" height="93" rx="18" fill="#dafa8b"/>
+      <path d="M27 34l25-14 25 14v28L52 76 27 62z M27 34l25 14 25-14 M52 48v28 M39 27l25 14" fill="none" stroke="#272233" stroke-width="3" stroke-linejoin="round"/>
+    </g>
+    <path d="M953 43v-12 M947 37h12 M1150 259v-18 M1141 250h18" stroke="#dafa8b" stroke-width="2"/>
+  </g>
+</svg>
