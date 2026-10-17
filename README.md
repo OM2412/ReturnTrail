@@ -222,7 +222,7 @@ With backend/frontend running, `test:workspace`, `test:inbox`, `test:context` an
 
 Both teammates contribute across frontend and backend. Portrait preparation and the edited-image disclosure are recorded in [Photo preparation](docs/PHOTO-EDIT.md).
 
-ChatGPT assisted with planning, code generation, interface design, tests and debugging. The team reviews, runs and verifies the implementation and is responsible for explaining the submitted code and graph model.
+ChatGPT assisted with planning and debugging. The team reviews, code , runs and verifies the project and is responsible for explaining the submitted code and graph model.
 
 ---
 
