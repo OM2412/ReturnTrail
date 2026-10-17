@@ -1,0 +1,47 @@
+services:
+  falkordb:
+    image: falkordb/falkordb@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a
+    environment:
+      REDIS_ARGS: --dir /data --appendonly yes
+    volumes:
+      - returntrail_production_graph:/data
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, redis-cli, PING]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+  app:
+    build:
+      context: .
+      args:
+        PUBLIC_SITE_URL: https://${PUBLIC_HOST:?Set PUBLIC_HOST to the public hostname}
+    environment:
+      FALKORDB_HOST: falkordb
+      FALKORDB_PORT: '6379'
+      RETURNTRAIL_PUBLIC_URL: https://${PUBLIC_HOST}
+      SESSION_COOKIE_SECURE: 'true'
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GOOGLE_LOGIN_ENABLED: ${GOOGLE_LOGIN_ENABLED:-false}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_LOGIN_ENABLED: 'false'
+    depends_on:
+      falkordb:
+        condition: service_healthy
+    restart: unless-stopped
+  web:
+    image: caddy:2-alpine
+    ports: ['80:80', '443:443']
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - returntrail_tls:/data
+      - returntrail_caddy_config:/config
+    depends_on: [app]
+    restart: unless-stopped
+volumes:
+  returntrail_production_graph:
+  returntrail_tls:
+  returntrail_caddy_config:
