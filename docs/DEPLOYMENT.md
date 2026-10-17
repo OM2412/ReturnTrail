@@ -1,6 +1,6 @@
 # Same-origin deployment and local fallback
 
-This update prepares deployment source. It does not buy hosting/domain names or deploy anything. Docker/Caddy execution and public TLS were not run in this workspace because no Docker daemon or hosting credentials were available. The equivalent built frontend + Spring production JAR is tested locally; that is a narrower guarantee.
+The production app image, real FalkorDB API behavior and database-volume retention across a database container restart were verified on a hosted Ubuntu amd64 runner on 17 October 2026. This is not a public deployment. Oracle account/VM provisioning, native ARM execution, Caddy/public TLS, real provider callbacks and target-host backup/restore still require acceptance checks.
 
 ## Supported shape
 
@@ -49,10 +49,22 @@ An unset origin omits canonical/sitemap claims rather than inventing a localhost
 
 ## CI
 
-`.github/workflows/verify.yml` runs backend regression checks, frontend lint/tests/build and mocked browser contracts on pushes/PRs. It uses read-only repository permissions. Source presence/YAML parsing are not a successful hosted run; verify its first GitHub Actions result after the user commits/pushes. The opt-in database/OIDC tests are separately documented and are not silently claimed as part of the default hosted job.
+`.github/workflows/verify.yml` runs backend regression checks, frontend lint/tests/build and mocked browser contracts with read-only repository permissions; hosted runs have passed. The opt-in provider tests are separately documented and are not part of this default job.
+
+`.github/workflows/deployment-check.yml` builds the actual production Dockerfile, starts the app and private FalkorDB through the production Compose source with an isolated loopback HTTP test override, runs the real source/workflow API invariants, then checks a graph marker after restarting the database container. Its [first hosted run passed](https://github.com/OM2412/ReturnTrail/actions/runs/39002103132) at commit `346227f81b42a588ed2e0b657a0f4c6aeab4ec1c`.
+
+The pinned FalkorDB image manifest lists both `linux/amd64` and `linux/arm64`; the hosted execution was amd64. This does not claim that the full stack has already run on an Oracle ARM VM. The CI override uses HTTP/non-secure cookies only inside the isolated runner. Production Compose retains HTTPS public-origin settings and secure cookies. CI cleanup removes only its own temporary volumes; never run volume-deleting cleanup on a deployment whose data you need.
 
 ## No-hosting fallback
 
 The event page prefers a live deployment, allowing a complete local setup and a working demo video when deployment is unavailable. Prepare a clean-checkout walkthrough, keep the graph/model configuration available locally and record the actual tested flow. Verify the final submission form's requirements.
 
 https://www.wemakedevs.org/hackathons/falkordb
+
+## Free VM account setup
+
+Oracle Always Free is the selected free-only route, subject to signup verification and regional capacity. Create the account at https://signup.cloud.oracle.com/ and select the home region carefully: Always Free compute must be provisioned in that region, and the home region cannot be changed after signup. Do not upgrade to Pay As You Go or create resources outside the Always Free allowances for this route.
+
+Oracle may require a mobile number and supported card for identity verification; a temporary authorization hold may appear. Enter verification details only on Oracle's site. Account/VM provisioning has not been performed by this project. After account activation, check the actual Always Free label, remaining account allowance and estimated charge before creating a VM. The selected image architecture, storage, ingress and final public hostname must then be verified on the target host.
+
+Official references: [Free Tier](https://docs.oracle.com/iaas/Content/FreeTier/freetier.htm), [Always Free resources and capacity](https://docs.oracle.com/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm), [signup steps](https://docs.oracle.com/en-us/iaas/Content/GSG/Tasks/signingup_topic-Sign_Up_for_Free_Oracle_Cloud_Promotion.htm).
