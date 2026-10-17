@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import "../styles/context.css";
+import Link from "../components/CaseLink";
 import {
   ArrowRight,
   Check,
@@ -46,7 +47,8 @@ const toolInfo = {
   },
 };
 export default function Investigation() {
-  const { data, run, working, investigate } = useCase();
+  const { data, run, working, investigate, reviewRules } = useCase();
+  const [ruleReview, setRuleReview] = useState(false);
   const [duration, setDuration] = useState(null);
   const pending = pendingFindings(data.findings, data.clarifications);
   const running = working === "investigate";
@@ -77,6 +79,14 @@ export default function Investigation() {
           )}
         </button>
       </PageTitle>
+      <section className="rule-review-panel panel">
+        <div><span className="eyebrow">NO AI CALLS NEEDED</span><h2>Review the supported rules.</h2>
+        <p>Read the graph and saved replies, then prepare a local question if needed. This uses deterministic rules, not an AI investigation. No message is sent.</p></div>
+        <button className="button secondary" disabled={!!working} onClick={async () => { if (await reviewRules()) setRuleReview(true); }}>
+          {working === "reviewRules" ? <Spinner label="Reviewing rules…" /> : "Review rules & prepare question"}
+        </button>
+        {ruleReview && <p role="status">Rule review completed. {data.pendingFindings.length} pending question(s). Original records are unchanged. <Link to="/case/tasks">Open follow-up tasks</Link></p>}
+      </section>
       {running && (
         <div className="investigation-running" role="status">
           <span className="scan-orbit">
@@ -132,7 +142,7 @@ export default function Investigation() {
                   </h3>
                   <p>
                     {run.pendingFindings.length
-                      ? "The recorded reasons differ. A local follow-up keeps the question with its sources."
+                      ? "The records need more context. A local follow-up keeps the question with its sources."
                       : "No pending follow-up was returned by this check. That does not mean the entire case is resolved."}
                   </p>
                 </div>
@@ -143,8 +153,8 @@ export default function Investigation() {
                   records
                 </span>
                 <span>
-                  <b>{(run.findings || data.findings).length}</b> historical
-                  disagreements
+                  <b>{(run.findings || data.findings).length}</b> recorded
+                  findings
                 </span>
                 <span>
                   <b>{run.pendingFindings.length}</b> pending questions
@@ -205,7 +215,7 @@ export default function Investigation() {
                 <Sparkles size={25} />
               </div>
               <span className="sticker">LESS GUESSWORK. MORE CONTEXT.</span>
-              <h2>Two stories walk into a return.</h2>
+              <h2>Every record has a place in the story.</h2>
               <p>
                 This check reads the original records and earlier manual
                 replies. If a question is still pending, it saves a follow-up
@@ -302,7 +312,7 @@ export default function Investigation() {
       <section className="panel findings-panel">
         <div className="panel-title">
           <div>
-            <span className="eyebrow">THE ORIGINAL DISAGREEMENT</span>
+            <span className="eyebrow">THE RECORDED FINDINGS</span>
             <h2>The history stays on the record.</h2>
           </div>
           <span>{plural(pending.length, "pending question")}</span>

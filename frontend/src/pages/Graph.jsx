@@ -1,4 +1,7 @@
-import { Link, useSearchParams } from "react-router";
+import { useState } from "react";
+import GraphProof from "../components/GraphProof";
+import { useSearchParams } from "react-router";
+import Link from "../components/CaseLink";
 import { ArrowUpRight, FileText, GitBranch } from "lucide-react";
 import { useCase } from "../app/CaseContext";
 import { Empty, PageTitle, SourceNote } from "../components/UI";
@@ -7,6 +10,7 @@ import { claimLabel } from "../lib/domain";
 
 export default function Graph() {
   const { data } = useCase();
+  const [view, setView] = useState("proof");
   const [params, setParams] = useSearchParams();
   const selected =
     data.evidence.find((row) => row.evidenceId === params.get("doc")) ||
@@ -15,8 +19,8 @@ export default function Graph() {
     <>
       <PageTitle
         label="CONNECT THE DOTS"
-        title="Same pickup. Different stories."
-        description="Watch the records leave the box. Pick one to see what it says and which pickup it belongs to."
+        title="Follow the links. Find the context."
+        description="Choose a record, then inspect the relationships returned by the graph or replay its 3D story."
       />
       {!selected ? (
         <Empty icon={GitBranch} title="No source-linked relationships to show.">
@@ -24,12 +28,51 @@ export default function Graph() {
         </Empty>
       ) : (
         <div className="graph-layout">
-          <div className="graph-stage">
-            <ParcelExperience
-              rows={data.evidence}
-              selected={selected.evidenceId}
-              onSelect={(id) => setParams({ doc: id })}
-            />
+          <div className="graph-stage graph-with-proof">
+            <div
+              className="graph-view-tabs"
+              role="group"
+              aria-label="Connection view"
+            >
+              <button
+                aria-pressed={view === "proof"}
+                onClick={() => setView("proof")}
+              >
+                Graph proof
+              </button>
+              <button
+                aria-pressed={view === "story"}
+                onClick={() => setView("story")}
+              >
+                3D story
+              </button>
+            </div>
+            <div
+              className="proof-record-picker"
+              role="group"
+              aria-label="Choose proof record"
+            >
+              {data.evidence.map((row) => (
+                <button
+                  key={row.evidenceId}
+                  aria-pressed={selected.evidenceId === row.evidenceId}
+                  onClick={() => setParams({ doc: row.evidenceId })}
+                >
+                  {row.evidenceId}
+                </button>
+              ))}
+            </div>
+            {view === "proof" ? (
+              <GraphProof graph={data.graph} selected={selected} />
+            ) : (
+              <>
+                <ParcelExperience
+                  rows={data.evidence}
+                  selected={selected.evidenceId}
+                  onSelect={(id) => setParams({ doc: id })}
+                />
+              </>
+            )}
           </div>
           <aside
             className={`panel graph-inspector claim-${selected.claimedStatus.toLowerCase()}`}
@@ -75,9 +118,13 @@ export default function Graph() {
           </aside>
         </div>
       )}
+      <Link className="button secondary" to="/case/context">
+        What changes if a source is set aside? <ArrowUpRight size={17} />
+      </Link>
       <SourceNote>
-        This is a simplified map of the returned evidence and pickup links. The
-        original records stay unchanged.
+        The proof view shows query-matched relationships; the 3D view
+        illustrates the returned evidence and pickup links. The original records
+        stay unchanged.
       </SourceNote>
     </>
   );

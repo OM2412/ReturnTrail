@@ -8,7 +8,7 @@ import {
   Package,
   ShieldCheck,
 } from "lucide-react";
-import { Link } from "react-router";
+import Link from "./CaseLink";
 import { useEffect, useRef, useState } from "react";
 import { claimLabel } from "../lib/domain";
 

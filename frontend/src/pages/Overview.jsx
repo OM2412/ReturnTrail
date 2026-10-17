@@ -10,7 +10,7 @@ import {
   ScanLine,
   SquareCheck,
 } from "lucide-react";
-import { Link } from "react-router";
+import Link from "../components/CaseLink";
 import { useCase } from "../app/CaseContext";
 import {
   EvidenceQuote,
@@ -26,7 +26,10 @@ export default function Overview() {
   const pending = pendingFindings(data.findings, data.clarifications);
   const open = data.actions.filter((row) => row.status === "OPEN");
   const resolved = data.actions.filter((row) => row.status === "RESOLVED");
-  const hasConflict = data.findings.length > 0;
+  const disagreements = data.findings.filter(
+    (row) => row.type === "PICKUP_REASON_DISAGREEMENT",
+  );
+  const hasConflict = disagreements.length > 0;
   const next = pending.length
     ? open.length
       ? {
@@ -36,14 +39,16 @@ export default function Overview() {
           cta: "Open the follow-up",
         }
       : {
-          title: "Let’s sort out the mixed signals.",
+          title: "Let’s find the missing context.",
           copy: "Run a check to read the records, review saved replies, and prepare a question if it is still needed.",
           to: "/case/investigation",
           cta: "Investigate case",
         }
     : {
-        title: "The reply is part of the story.",
-        copy: "No follow-up is pending under the current check. You can review the saved reply and the original records.",
+        title: "No question pending under this check.",
+        copy: data.clarifications.length
+          ? "No follow-up is pending under this check. Review the manual reply alongside the original records."
+          : "The supported check found no pending question. Review the original records and their pickup links; this does not verify their explanations.",
         to: data.clarifications.length ? "/case/tasks" : "/case/investigation",
         cta: data.clarifications.length
           ? "Read the saved reply"
@@ -61,9 +66,31 @@ export default function Overview() {
           {run ? "Review investigation" : "Investigate case"}
         </Link>
       </PageTitle>
+      {data.changes?.latestEvidenceIds?.length > 0 && (
+        <section className="context-changed">
+          <span className="sticker">
+            NEW CONTEXT / VERSION {data.evidenceVersion}
+          </span>
+          <div>
+            <strong>A source joined the story.</strong>
+            <p>
+              {data.changes.latestEvidenceIds.length} new source at the latest
+              evidence version.{" "}
+              {data.changes.earlierTaskIds.length > 0
+                ? "Earlier task history stays; the current source set needs its own review."
+                : "Review the updated records before taking the next step."}
+            </p>
+          </div>
+          <Link className="button ink-button" to="/case/investigation">
+            Review what’s pending <ArrowRight size={16} />
+          </Link>
+        </section>
+      )}
       <section className="overview-hero">
         <div>
-          <span className="sticker dark-sticker">PRACTICE CASE / 001</span>
+          <span className="sticker dark-sticker">
+            PRACTICE CASE / {data.caseId}
+          </span>
           <h2>
             {hasConflict ? (
               <>
@@ -73,16 +100,20 @@ export default function Overview() {
               </>
             ) : (
               <>
-                Every return
+                {data.caseInfo.title}
                 <br />
-                <span>has a paper trail.</span>
+                <span>
+                  {data.assessment === "MISSING_CONTEXT"
+                    ? "We need one more piece."
+                    : "The relationships matter."}
+                </span>
               </>
             )}
           </h2>
           <p>
             {hasConflict
               ? "One record says the customer cancelled. Another says the courier was unavailable. Here’s the context, in one place."
-              : "Review the saved records and keep the next question connected."}
+              : data.caseInfo.lesson}
           </p>
           <Link className="text-link" to="/case/graph">
             See how the stories connect <ArrowUpRight size={17} />
@@ -120,7 +151,7 @@ export default function Overview() {
           },
           {
             label: "Disagreements found",
-            value: data.findings.length,
+            value: disagreements.length,
             sub: "Kept in the original history",
             icon: GitBranch,
             color: "lilac",
@@ -133,7 +164,7 @@ export default function Overview() {
             color: "lime",
           },
           {
-            label: "Tasks with a saved reply",
+            label: "Questions with an explanation",
             value: resolved.length,
             sub: "Task status, not case closure",
             icon: SquareCheck,
@@ -202,7 +233,7 @@ export default function Overview() {
             to="/case/evidence"
             icon={FileText}
             label="Read the evidence"
-            detail="Both original stories, side by side"
+            detail="Original statements, scoped to each pickup"
             number={data.evidence.length}
           />
           <FeatureLink

@@ -264,9 +264,15 @@ function GrowingConnection({ destination, origin, index, timing, active }) {
 function Story({ rows, selected, onSelect, playing, reduced, onPhase }) {
   const { camera, size } = useThree();
   useEffect(() => {
-    camera.position.set(0, 2.3, size.width / size.height < 1.3 ? 8.7 : 6.8);
+    const crowded = rows.length > 2;
+    const narrow = size.width / size.height < 1.3;
+    camera.position.set(
+      0,
+      crowded ? 4 : 2.3,
+      crowded ? (narrow ? 14 : 10) : narrow ? 8.7 : 6.8,
+    );
     camera.updateProjectionMatrix();
-  }, [camera, size.width, size.height]);
+  }, [camera, size.width, size.height, rows.length]);
   const timing = useRef({ elapsed: reduced ? 20 : 0, phase: -1 });
   const pickups = useMemo(
     () => [...new Set(rows.map((row) => row.pickupId))],
@@ -290,7 +296,11 @@ function Story({ rows, selected, onSelect, playing, reduced, onPhase }) {
     else if (playing && !document.hidden)
       timing.current.elapsed += Math.min(delta, 0.05);
     const t = timing.current.elapsed;
-    const phase = t < 0.85 ? 0 : t < 2.4 ? 1 : t < 4.15 ? 2 : 3;
+    const completeAt = Math.max(
+      4.15,
+      2.4 + Math.max(0, rows.length - 1) * 0.7 + 1.25,
+    );
+    const phase = t < 0.85 ? 0 : t < 2.4 ? 1 : t < completeAt ? 2 : 3;
     if (timing.current.phase !== phase) {
       timing.current.phase = phase;
       onPhase(phase);
@@ -347,6 +357,7 @@ function Story({ rows, selected, onSelect, playing, reduced, onPhase }) {
       />
       <OrbitControls
         makeDefault
+        target={[0, rows.length > 2 ? 1.35 : 0, 0]}
         enablePan={false}
         enableZoom={false}
         minPolarAngle={0.7}

@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Link, useSearchParams } from "react-router";
+import { useRef, useState } from "react";
+import { useSearchParams } from "react-router";
+import Link from "../components/CaseLink";
 import {
   ArrowRight,
   Check,
@@ -21,14 +22,27 @@ import { timestamp } from "../lib/domain";
 function ClarificationForm({ action, onSave, working }) {
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+  const [outcome, setOutcome] = useState("");
+  const reply = useRef(null);
   async function submit(event) {
     event.preventDefault();
     if (!note.trim()) {
       setError("Add the explanation before saving.");
       return;
     }
+    if (!outcome) {
+      setError("Choose whether you have an explanation or still need one.");
+      return;
+    }
     setError("");
-    if (await onSave(action.actionId, note)) setNote("");
+    const fingerprint = `${note.trim()}|${outcome}`;
+    if (reply.current?.fingerprint !== fingerprint)
+      reply.current = { fingerprint, id: crypto.randomUUID() };
+    if (await onSave(action.actionId, note, outcome, reply.current.id)) {
+      setNote("");
+      setOutcome("");
+      reply.current = null;
+    }
   }
   return (
     <form
@@ -49,6 +63,37 @@ function ClarificationForm({ action, onSave, working }) {
           </p>
         </div>
       </div>
+      <fieldset className="reply-outcomes" disabled={!!working}>
+        <legend>What does this reply tell us?</legend>
+        <label>
+          <input
+            type="radio"
+            name="reply-outcome"
+            value="STILL_UNKNOWN"
+            checked={outcome === "STILL_UNKNOWN"}
+            onChange={(e) => setOutcome(e.target.value)}
+            required
+          />
+          <span>
+            <strong>Still unknown</strong>
+            <small>Save a note. Keep the question open.</small>
+          </span>
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="reply-outcome"
+            value="EXPLANATION_PROVIDED"
+            checked={outcome === "EXPLANATION_PROVIDED"}
+            onChange={(e) => setOutcome(e.target.value)}
+            required
+          />
+          <span>
+            <strong>An explanation was provided</strong>
+            <small>Record the manual explanation and resolve this task.</small>
+          </span>
+        </label>
+      </fieldset>
       <textarea
         id="clarification-note"
         aria-describedby="clarification-help"
@@ -62,7 +107,7 @@ function ClarificationForm({ action, onSave, working }) {
       />
       <div className="form-meta">
         <span id="clarification-help">
-          The first saved reply is preserved. Original records stay unchanged.
+          Saved notes are preserved. Original records stay unchanged.
         </span>
         <span>{note.length} / 2000</span>
       </div>
@@ -74,36 +119,51 @@ function ClarificationForm({ action, onSave, working }) {
       <button
         className="button primary"
         type="submit"
-        disabled={!!working || !note.trim()}
+        disabled={!!working || !note.trim() || !outcome}
       >
         {working === "clarify" ? (
           <Spinner label="Saving your reply…" />
         ) : (
           <>
             <MessageSquare size={18} />
-            Save reply & resolve task
+            {outcome === "EXPLANATION_PROVIDED"
+              ? "Save explanation & resolve task"
+              : "Save note & keep open"}
           </>
         )}
       </button>
       <p className="form-disclosure">
-        This saves a reply and resolves the local task. It does not verify the
-        explanation or close the whole case.
+        You choose whether this reply supplies an explanation. A manual reply is
+        not independently verified and does not close the whole case.
       </p>
     </form>
   );
 }
 export default function Tasks() {
-  const { data, clarify, working } = useCase();
+  const { data, clarify, working, needsRefresh } = useCase();
   const [params, setParams] = useSearchParams();
   const selected =
     data.actions.find((row) => row.actionId === params.get("task")) ||
+    data.actions.find(
+      (action) =>
+        action.status === "OPEN" &&
+        data.findings.some(
+          (f) =>
+            f.findingId === action.findingId &&
+            f.evidenceRevision === action.evidenceRevision,
+        ),
+    ) ||
     data.actions[0];
-  const clarification = selected
-    ? data.clarifications.find((row) => row.actionId === selected.actionId)
-    : null;
+  const replies = selected
+    ? data.clarifications
+        .filter((row) => row.actionId === selected.actionId)
+        .sort((a, b) => Date.parse(a.recordedAt) - Date.parse(b.recordedAt))
+    : [];
   const finding = selected
     ? data.findings.find(
-        (row) => `FOLLOWUP-${row.findingId}` === selected.actionId,
+        (row) =>
+          row.findingId === selected.findingId &&
+          row.evidenceRevision === selected.evidenceRevision,
       )
     : null;
   return (
@@ -138,7 +198,7 @@ export default function Tasks() {
               >
                 <SquareCheck size={23} />
                 <span>
-                  <strong>Clarify the pickup reason</strong>
+                  <strong>Clarify the missing context</strong>
                   <small>{timestamp(action.createdAt)}</small>
                   <Status value={action.status} />
                 </span>
@@ -157,32 +217,46 @@ export default function Tasks() {
             <div className="task-created">
               Question saved {timestamp(selected.createdAt)}
             </div>
+            {!finding && (
+              <SourceNote>
+                This task belongs to an earlier source set. Its history stays
+                here. Run a fresh investigation to prepare any current question.
+              </SourceNote>
+            )}
             <div className="reference-links">
-              {finding?.evidence.map((row, i) => (
-                <RecordLink
-                  key={`${row.evidenceId}-${i}`}
-                  id={row.evidenceId}
-                />
+              {(
+                selected.evidenceIds ||
+                finding?.evidence.map((row) => row.evidenceId) ||
+                []
+              ).map((id, i) => (
+                <RecordLink key={`${id}-${i}`} id={id} />
               ))}
             </div>
             <CopyReference value={selected.actionId} label="Task reference" />
-            {clarification ? (
-              <section className="saved-clarification">
+            {replies.map((clarification) => (
+              <section
+                key={clarification.clarificationId}
+                className="saved-clarification"
+              >
                 <div className="saved-heading">
                   <span className="chunky-icon">
                     <Check size={26} />
                   </span>
                   <div>
                     <span className="eyebrow">A LITTLE MORE CONTEXT</span>
-                    <h3>Manual clarification recorded</h3>
+                    <h3>
+                      {clarification.status === "RESOLVED"
+                        ? "Manual explanation recorded"
+                        : "Note saved. Question still open."}
+                    </h3>
                   </div>
                 </div>
                 <p className="clarification-note">{clarification.note}</p>
                 <small>Saved {timestamp(clarification.recordedAt)}</small>
                 <SourceNote>
-                  The local task is {clarification.status}. This reply is
-                  manually recorded and not independently verified. Both
-                  original records stay intact.
+                  Task status when this reply was recorded:{" "}
+                  {clarification.status}. This reply is manually recorded and
+                  not independently verified. Both original records stay intact.
                 </SourceNote>
                 <Link className="button ink-button" to="/case/investigation">
                   Check again with this reply <ArrowRight size={17} />
@@ -192,17 +266,20 @@ export default function Tasks() {
                   label="Reply reference"
                 />
               </section>
-            ) : selected.status === "OPEN" ? (
+            ))}
+            {selected.status === "OPEN" && finding ? (
               <ClarificationForm
                 key={selected.actionId}
                 action={selected}
                 onSave={clarify}
-                working={working}
+                working={working || (needsRefresh ? "refresh-required" : null)}
               />
             ) : (
               <SourceNote>
-                This task is {selected.status}. No reply record was returned.
-                Refresh the case before taking another action.
+                This task is {selected.status}.
+                {!replies.length && " No reply record was returned."}
+                {!finding && " It belongs to an earlier source set."}
+                {" Refresh the case before taking another action."}
               </SourceNote>
             )}
           </article>

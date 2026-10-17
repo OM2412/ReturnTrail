@@ -1,3 +1,26 @@
+let sessionCheck = null;
+export function resetSessionCheck() {
+  sessionCheck = null;
+}
+async function csrfHeader() {
+  if (!sessionCheck)
+    sessionCheck = request("/api/auth/csrf", { timeout: 15000 })
+      .then((value) => {
+        if (
+          value?.headerName !== "X-CSRF-TOKEN" ||
+          typeof value.token !== "string"
+        )
+          throw new ApiError(
+            "The session check was incomplete. Refresh before retrying.",
+          );
+        return { [value.headerName]: value.token };
+      })
+      .catch((error) => {
+        sessionCheck = null;
+        throw error;
+      });
+  return sessionCheck;
+}
 export class ApiError extends Error {
   constructor(message, status = 0, retryAfter = null) {
     super(message);
@@ -10,12 +33,17 @@ async function request(path, { timeout = 450000, ...options } = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
+    const csrf =
+      options.method && !["GET", "HEAD", "OPTIONS"].includes(options.method)
+        ? await csrfHeader()
+        : {};
     const response = await fetch(path, {
       ...options,
       credentials: "same-origin",
       signal: controller.signal,
       headers: {
         Accept: "application/json",
+        ...csrf,
         ...(options.body ? { "Content-Type": "application/json" } : {}),
         ...options.headers,
       },
@@ -33,9 +61,10 @@ async function request(path, { timeout = 450000, ...options } = {}) {
       }
     }
     if (!response.ok) {
+      if ([401, 403].includes(response.status)) resetSessionCheck();
       const message =
         response.status === 401
-          ? "Your demo session has expired. Start a fresh demo to continue."
+          ? "Your workspace session has expired. Sign in again or start a fresh guest demo."
           : response.status === 429
             ? "The demo has reached its request limit. Please retry after the waiting period."
             : response.status >= 500
@@ -49,6 +78,11 @@ async function request(path, { timeout = 450000, ...options } = {}) {
         response.headers.get("Retry-After"),
       );
     }
+    if (
+      path === "/api/auth/logout" ||
+      (path === "/api/guest-sessions" && options.method === "DELETE")
+    )
+      resetSessionCheck();
     return data;
   } catch (error) {
     if (error.name === "AbortError")
@@ -63,21 +97,53 @@ async function request(path, { timeout = 450000, ...options } = {}) {
     clearTimeout(timer);
   }
 }
-const root = "/api/cases/CASE-001";
+const root = (caseId = "CASE-001") =>
+  `/api/cases/${encodeURIComponent(caseId)}`;
 export const api = {
+  session: () => request("/api/auth/session", { timeout: 15000 }),
+  logout: () => request("/api/auth/logout", { method: "POST", timeout: 15000 }),
   createSession: () =>
     request("/api/guest-sessions", { method: "POST", timeout: 45000 }),
   endSession: () =>
     request("/api/guest-sessions", { method: "DELETE", timeout: 45000 }),
-  evidence: () => request(`${root}/evidence`, { timeout: 45000 }),
-  findings: () => request(`${root}/findings`, { timeout: 45000 }),
-  actions: () => request(`${root}/actions`, { timeout: 45000 }),
-  clarifications: () => request(`${root}/clarifications`, { timeout: 45000 }),
-  investigate: () => request(`${root}/investigate`, { method: "POST" }),
-  clarify: (actionId, note) =>
-    request(`${root}/actions/clarification`, {
+  cases: () => request("/api/cases", { timeout: 45000 }),
+  snapshot: (caseId) => request(`${root(caseId)}/snapshot`, { timeout: 45000 }),
+  brief: (caseId) => request(`${root(caseId)}/brief`, { timeout: 45000 }),
+  ingest: (caseId, body) =>
+    request(`${root(caseId)}/evidence`, {
       method: "POST",
-      body: JSON.stringify({ actionId, note }),
+      body: JSON.stringify(body),
+      timeout: 45000,
+    }),
+  context: (caseId, exclude = "") => request(`${root(caseId)}/context?exclude=${encodeURIComponent(exclude)}`, { timeout: 45000 }),
+  prepareRules: (caseId) => request(`${root(caseId)}/actions`, { method: "POST", timeout: 45000 }),
+  proof: (caseId) => request(`${root(caseId)}/proof`, { timeout: 45000 }),
+  evidence: (caseId) => request(`${root(caseId)}/evidence`, { timeout: 45000 }),
+  findings: (caseId) => request(`${root(caseId)}/findings`, { timeout: 45000 }),
+  actions: (caseId) => request(`${root(caseId)}/actions`, { timeout: 45000 }),
+  clarifications: (caseId) =>
+    request(`${root(caseId)}/clarifications`, { timeout: 45000 }),
+  investigate: (caseId) =>
+    request(`${root(caseId)}/investigate`, { method: "POST" }),
+  clarify: (
+    caseId,
+    actionId,
+    note,
+    outcome,
+    requestId,
+    evidenceRevision,
+    expectedVersion,
+  ) =>
+    request(`${root(caseId)}/actions/clarification`, {
+      method: "POST",
+      body: JSON.stringify({
+        actionId,
+        note,
+        outcome,
+        requestId,
+        evidenceRevision,
+        expectedVersion,
+      }),
       timeout: 45000,
     }),
 };

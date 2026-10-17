@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
+import Link from "../components/CaseLink";
 import {
   ArrowRight,
   Columns2,
@@ -30,9 +31,12 @@ export default function Evidence() {
     <>
       <PageTitle
         label="STRAIGHT FROM THE RECORDS"
-        title="Same return. Two receipts."
+        title="Original words. The whole paper trail."
         description="Read each statement exactly as it was recorded. Compare the accounts without guessing who is right."
       >
+        <Link className="button primary" to="/case/inbox">
+          Add a synthetic source <ArrowRight size={17} />
+        </Link>
         <Link className="button secondary" to="/case/graph">
           <GitBranch size={17} />
           View connections
@@ -112,7 +116,7 @@ export default function Evidence() {
                   <span className="sticker">
                     SIDE BY SIDE / {selected.pickupId}
                   </span>
-                  <h2>Two accounts. Spot the difference.</h2>
+                  <h2>Compare the records for this attempt.</h2>
                   <p>{plural(related.length, "record")} about this pickup.</p>
                   <div className="quote-grid">
                     {related.map((row, i) => (
@@ -120,8 +124,8 @@ export default function Evidence() {
                     ))}
                   </div>
                   <SourceNote>
-                    These statements give different reasons. A comparison shows
-                    the disagreement; it does not verify either explanation.
+                    This comparison includes records about the selected pickup
+                    only. It does not independently verify their explanations.
                   </SourceNote>
                 </div>
               ) : (
@@ -132,7 +136,21 @@ export default function Evidence() {
                       0{rows.indexOf(selected) + 1}
                     </span>
                   </div>
+                  <span className="eyebrow">SUPPORTING QUOTE</span>
                   <blockquote>{selected.statement}</blockquote>
+                  {selected.originalText &&
+                    selected.originalText !== selected.statement && (
+                      <details className="source-original">
+                        <summary>Read the complete original text</summary>
+                        <p>{selected.originalText}</p>
+                      </details>
+                    )}
+                  <p className="source-metadata">
+                    {selected.sourceLabel || selected.evidenceId} ·{" "}
+                    {selected.origin === "MANUAL_SYNTHETIC_EVIDENCE"
+                      ? `Added manually at version ${selected.addedVersion}`
+                      : "Seeded practice source"}
+                  </p>
                   <span className="claim-pill">
                     {claimLabel(selected.claimedStatus)}
                   </span>

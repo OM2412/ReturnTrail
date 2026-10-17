@@ -10,9 +10,17 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { useAuth } from "../app/AuthContext";
 import { useCase } from "../app/CaseContext";
 import { Brand, ErrorNotice, Spinner } from "../components/UI";
 import ParcelExperience from "../components/ParcelExperience";
+import TeamSection from "../components/TeamSection";
+import VideoGuide from "../components/VideoGuide";
+import PublicFooter from "../components/PublicFooter";
+import GitHubMark from "../components/GitHubMark";
+import { YouTubeMark } from "../components/SocialMarks";
+import { demoVideoId, project } from "../config/publicSite";
+import "../styles/public.css";
 const illustration = [
   { evidenceId: "DOC-001", pickupId: "PICKUP-001" },
   { evidenceId: "DOC-002", pickupId: "PICKUP-001" },
@@ -20,23 +28,28 @@ const illustration = [
 
 export default function Landing() {
   const { start, working, error } = useCase();
+  const { session: auth } = useAuth();
   const navigate = useNavigate();
   const [selected, setSelected] = useState("DOC-001");
   async function open() {
-    if (await start()) navigate("/case");
+    if (await start()) navigate("/cases");
   }
   return (
     <div className="landing">
       <header className="landing-nav wrap">
         <Brand />
         <nav aria-label="Landing navigation">
+          <Link to={auth.authenticated ? "/account" : "/signin"}>
+            {auth.authenticated ? "My account" : "Sign in"}
+          </Link>
           <a href="#process">The how-to</a>
+          <Link to="/about">The team</Link>
           <a
-            href="https://github.com/OM2412/ReturnTrail"
+            href={project.repository}
             target="_blank"
             rel="noreferrer"
           >
-            Under the hood <ArrowUpRight size={14} />
+            <GitHubMark size={17}/> Source code <ArrowUpRight size={14} />
           </a>
         </nav>
         <span className="session-pill">
@@ -44,6 +57,7 @@ export default function Landing() {
           Try it. No sign-up.
         </span>
       </header>
+      <nav className="public-guide-links wrap" aria-label="Public guides"><a href="/how-it-works.html">How the evidence workflow works</a><a href="/privacy.html">Demo privacy & data boundaries</a></nav>
       <main>
         <section className="landing-hero wrap">
           <div className="landing-copy">
@@ -61,8 +75,8 @@ export default function Landing() {
             <p className="lead">
               “You cancelled.” “No courier was available.”
               <br />
-              Two records. One pickup. See what each one says—and what needs a
-              reply.
+              Two records. One pickup. Compare their original words and build a
+              source-linked brief for your next support conversation.
             </p>
             <div className="button-row">
               <button
@@ -74,13 +88,17 @@ export default function Landing() {
                   <Spinner label="Opening your case…" />
                 ) : (
                   <>
-                    Explore the demo case <ArrowUpRight size={20} />
+                    {auth.authenticated
+                      ? "Open my workspace"
+                      : "Explore the demo case"}{" "}
+                    <ArrowUpRight size={20} />
                   </>
                 )}
               </button>
               <a className="text-link" href="#process">
                 How does this work? <ArrowRight size={17} />
               </a>
+              {demoVideoId && <a className="text-link" href="#walkthrough"><YouTubeMark size={21}/>Watch the demo</a>}
             </div>
             <p className="micro-note">
               <ShieldCheck size={16} />
@@ -173,6 +191,8 @@ export default function Landing() {
             ))}
           </div>
         </section>
+        <VideoGuide/>
+        <TeamSection compact/>
         <section className="landing-last wrap">
           <div>
             <span className="eyebrow">THE BOX IS OPEN. YOUR MOVE.</span>
@@ -196,13 +216,7 @@ export default function Landing() {
           </button>
         </section>
       </main>
-      <footer className="landing-footer wrap">
-        <Brand />
-        <Link to="/case">
-          Open existing workspace <ArrowRight size={15} />
-        </Link>
-        <span>Built with FalkorDB · Graph Hacks</span>
-      </footer>
+      <PublicFooter/>
     </div>
   );
 }

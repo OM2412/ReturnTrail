@@ -1,3 +1,5 @@
+> Historical frontend milestone. Current cumulative verification is in docs/CONTEXT-UPDATE.md and the delivered validation JSON; the counts below are not the latest aggregate.
+
 # Validation
 
 ## Result
