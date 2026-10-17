@@ -1,0 +1,74 @@
+name: Production container check
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - compose.production.yaml
+      - .dockerignore
+      - backend/**
+      - frontend/**
+      - .github/workflows/deployment-check.yml
+  pull_request:
+    paths:
+      - Dockerfile
+      - compose.production.yaml
+      - .dockerignore
+      - backend/**
+      - frontend/**
+      - .github/workflows/deployment-check.yml
+permissions:
+  contents: read
+concurrency:
+  group: production-container-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PUBLIC_HOST: returntrail.example.invalid
+      COMPOSE_PROJECT_NAME: returntrail-deployment-check
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Inspect the pinned graph image platforms
+        run: docker buildx imagetools inspect falkordb/falkordb@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a
+      - name: Prepare isolated HTTP-only test access
+        run: |
+          cat > compose.check.yaml <<'YAML'
+          services:
+            app:
+              ports: ['127.0.0.1:8085:8085']
+              environment:
+                RETURNTRAIL_PUBLIC_URL: http://127.0.0.1:8085
+                SESSION_COOKIE_SECURE: 'false'
+          YAML
+      - name: Build the actual production app image
+        run: docker compose -f compose.production.yaml -f compose.check.yaml build app
+      - name: Start app and private graph
+        run: |
+          docker compose -f compose.production.yaml -f compose.check.yaml up -d falkordb app
+          curl --fail --silent --show-error --retry 60 --retry-all-errors --retry-delay 2 --max-time 3 http://127.0.0.1:8085/actuator/health/readiness
+      - name: Verify production routes and real graph API invariants
+        run: |
+          curl --fail --silent http://127.0.0.1:8085/about | grep -q 'id="root"'
+          curl --fail --silent http://127.0.0.1:8085/team/om.webp > /tmp/returntrail-portrait.webp
+          test -s /tmp/returntrail-portrait.webp
+          API_URL=http://127.0.0.1:8085 node frontend/tests/evidence-api.mjs
+      - name: Verify graph data survives a database container restart
+        run: |
+          docker compose -f compose.production.yaml -f compose.check.yaml exec -T falkordb redis-cli GRAPH.QUERY returntrail_deployment_check "MERGE (m:DeploymentCheck {id:'volume-check'}) SET m.value=42 RETURN m.value"
+          docker compose -f compose.production.yaml -f compose.check.yaml restart falkordb
+          curl --fail --silent --show-error --retry 60 --retry-all-errors --retry-delay 2 --max-time 3 http://127.0.0.1:8085/actuator/health/readiness
+          docker compose -f compose.production.yaml -f compose.check.yaml exec -T falkordb redis-cli --raw GRAPH.RO_QUERY returntrail_deployment_check "MATCH (m:DeploymentCheck {id:'volume-check'}) RETURN m.value" > /tmp/returntrail-persistence.txt
+          python3 -c "from pathlib import Path; assert '42' in Path('/tmp/returntrail-persistence.txt').read_text().splitlines()"
+      - name: Container diagnostics on failure
+        if: failure()
+        run: docker compose -f compose.production.yaml -f compose.check.yaml logs --no-color --tail 150
+      - name: Remove isolated CI containers and test volumes
+        if: always()
+        run: docker compose -f compose.production.yaml -f compose.check.yaml down --volumes --remove-orphans
