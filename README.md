@@ -7,7 +7,8 @@
 </p>
 
 <p align="center">
-  <a href="#try-the-demo">Try the demo</a> ·
+  <a href="https://returntrail-api.onrender.com">Open live demo</a> ·
+  <a href="#try-the-demo">Demo walkthrough</a> ·
   <a href="#why-a-graph">Why a graph?</a> ·
   <a href="#run-locally">Run locally</a> ·
   <a href="docs/API.md">API reference</a> ·
@@ -40,9 +41,13 @@ ReturnTrail preserves both statements. It makes the relationship inspectable, ke
 
 ## Try the demo
 
-**A suggested 90-second walkthrough, with no account or model key required:**
+**[Open the live guest preview](https://returntrail-api.onrender.com)** — no account or personal model key required.
 
-1. [Run the app locally](#run-locally), open `http://127.0.0.1:5174` and start a guest practice workspace.
+> **Free preview:** Google/GitHub sign-in is disabled here. Render may need about a minute to wake after inactivity; backend restarts reset sessions. The free cloud database has no persistence or backups, so preview work can be lost. Use fictional data and export your brief. [Hosting limits and setup](docs/VERCEL-RENDER.md).
+
+**A suggested 90-second walkthrough:**
+
+1. Open [ReturnTrail](https://returntrail-api.onrender.com) and choose **Explore as a guest**. Alternatively, [run locally](#run-locally) at `http://127.0.0.1:5174`.
 2. Open **CASE-001**. Compare the original words in **Evidence**, then inspect their returned source paths in **Connections**.
 3. Open **Context lab** and set aside **DOC-001**. The supported rule outcome changes because only one recorded reason remains. The original evidence stays untouched.
 4. In **Investigation**, choose **Review rules & prepare question**. This prepares or reuses a source-linked local follow-up without a model call.
@@ -64,7 +69,7 @@ All records, dates and notes are fictional. CASE-004's seeded reply is an exampl
 
 </details>
 
-A public deployment and recorded walkthrough are still release tasks. The website's optional video section appears only after a real YouTube URL is configured; [video setup](docs/TEAM-POLISH.md) documents it.
+The public guest preview is live. A recorded walkthrough remains a release task. The website's optional video section appears only after a real YouTube URL is configured; [video setup](docs/TEAM-POLISH.md) documents it.
 
 ## Why a graph?
 
@@ -182,6 +187,8 @@ The [verification workflow](https://github.com/OM2412/ReturnTrail/actions/workfl
 | **14 frontend Node tests passed** | Domain, source workflow, support draft and public-video input boundaries. |
 | **23 browser contract groups passed locally** | Mocked API responses; these do not establish real backend or provider behavior. |
 | **5 production integration groups passed locally** | Combined Spring JAR with actual FalkorDB, including guest entry and public/private route behavior. |
+| **5 public API workflow groups passed** | Tested on the actual Render URL with managed FalkorDB on 18 October 2026; includes source writes, retry/version protection, history and separate guest isolation. |
+| **Real hosted AI tool-calling check passed** | `openai/gpt-oss-120b`, 4 model requests, all 4 required tools in order, one OPEN local follow-up. [Public validation record](docs/PUBLIC-VALIDATION.md). |
 | **Landing/About accessibility scan** | Zero serious/critical axe findings in the tested desktop state; not a full accessibility certification. |
 
 Recorded results and exact limits: [Team/public validation](docs/TEAM-VALIDATION.md), [Context validation](docs/CONTEXT-VALIDATION.md) and [Workspace validation](docs/WORKSPACE-VALIDATION.md). The twenty labelled synthetic rule fixtures are a regression set, not a real-world accuracy benchmark.
@@ -200,7 +207,7 @@ npx.cmd playwright install chromium
 npm.cmd run test:browser
 ```
 
-With backend/frontend running, `test:workspace`, `test:inbox`, `test:context` and `test:api` exercise real local integration using their own synthetic guests. Run suites separately to avoid shared rate limits. These deterministic checks make no model calls. Real Google sign-in, uploaded-video playback and public-host deployment need their own acceptance checks.
+With backend/frontend running, `test:workspace`, `test:inbox`, `test:context` and `test:api` exercise real local integration using their own synthetic guests. Run suites separately to avoid shared rate limits. These deterministic checks make no model calls. Real Google sign-in, uploaded-video playback and any new deployment need their own acceptance checks.
 
 </details>
 
