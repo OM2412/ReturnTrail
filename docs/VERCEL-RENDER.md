@@ -1,4 +1,6 @@
-# Vercel + Render + external FalkorDB
+# Alternative: Vercel + Render + external FalkorDB
+
+> The current live preview is **[https://returntrail-api.onrender.com](https://returntrail-api.onrender.com)**, with frontend and API together on Render. Use [the current deployment guide](DEPLOYMENT.md#current-public-preview) to reproduce that shape. This page documents an optional split deployment.
 
 This route runs independently of your laptop. Vercel serves the frontend; a single
 Render Docker web service serves the API; FalkorDB remains the primary graph
@@ -49,7 +51,7 @@ Add these variables **in Render**, never in a frontend environment or Git:
 | --- | --- |
 | `FALKORDB_HOST` | Database host only |
 | `FALKORDB_PORT` | Database connection port |
-| `FALKORDB_USERNAME` | Username from the cloud console (often `default`) |
+| `FALKORDB_USERNAME` | Exact username from the cloud console; the current instance uses `falkordb` |
 | `FALKORDB_PASSWORD` | Database password, exactly as issued |
 | `FALKORDB_SSL` | `false` for the non-TLS Free endpoint; `true` for a TLS endpoint |
 | `SESSION_COOKIE_SECURE` | `true` |

@@ -11,7 +11,7 @@
   <a href="#try-the-demo">Demo walkthrough</a> ·
   <a href="#why-a-graph">Why a graph?</a> ·
   <a href="#run-locally">Run locally</a> ·
-  <a href="docs/API.md">API reference</a> ·
+  <a href="docs/README.md">Documentation</a> ·
   <a href="#team">Meet the team</a>
 </p>
 
@@ -21,7 +21,9 @@
 
 <p align="center"><sub>Java 21 · Spring Boot · React · FalkorDB · Groq tool calling</sub></p>
 
-ReturnTrail is an evidence-linked workspace for investigating conflicting e-commerce return records. It follows the connections between an order, its return, a specific pickup attempt and the statements recorded about it—then prepares a useful next question with its sources attached.
+ReturnTrail helps a shopper prepare an evidence-linked conversation about a disputed return pickup. Connect the original records, see what an earlier reply covered, and prepare the next support question with its sources attached.
+
+**From conflicting records to a reviewable support brief:** compare claims → inspect their graph paths → prepare a follow-up → record a manual reply → export the brief.
 
 Built for [WeMakeDevs × FalkorDB Graph Hacks](https://www.wemakedevs.org/hackathons/falkordb), under **Agents That Act on Connected Data**.
 
@@ -33,17 +35,18 @@ Built for [WeMakeDevs × FalkorDB Graph Hacks](https://www.wemakedevs.org/hackat
 | --- | --- | --- |
 | “Pickup cancelled by customer.” | “Pickup failed because the courier was unavailable.” | Do both statements describe the **same pickup attempt**, and what did an earlier reply actually cover? |
 
-ReturnTrail preserves both statements. It makes the relationship inspectable, keeps saved explanations separate from original evidence and asks for clarification when the supported rules still find a question pending.
+For **CASE-001**, both records describe **PICKUP-001**. The app retains both claims and prepares: “Please confirm why pickup PICKUP-001 failed and explain the conflicting recorded reasons.” The resulting brief links back to the original sources. A later source can require fresh review even when an earlier task was resolved.
+
+## Try the demo
+
+**[Open ReturnTrail →](https://returntrail-api.onrender.com)**  
+https://returntrail-api.onrender.com — choose **Explore as a guest**; no account or personal model key required.
+
+> **Free preview:** Google/GitHub sign-in is disabled here. Render may need about a minute to wake after inactivity; backend restarts reset sessions. The free cloud database has no persistence or backups, so preview work can be lost. Use fictional data and export your brief. [Current hosting and limits](docs/DEPLOYMENT.md#current-public-preview).
 
 ![Actual ReturnTrail practice workspace showing two sources, a pickup disagreement and a pending question](docs/assets/workspace.webp)
 
 <sub>Actual product capture with a fresh synthetic guest workspace and a local FalkorDB instance. No case API responses were mocked for these screenshots.</sub>
-
-## Try the demo
-
-**[Open the live guest preview](https://returntrail-api.onrender.com)** — no account or personal model key required.
-
-> **Free preview:** Google/GitHub sign-in is disabled here. Render may need about a minute to wake after inactivity; backend restarts reset sessions. The free cloud database has no persistence or backups, so preview work can be lost. Use fictional data and export your brief. [Hosting limits and setup](docs/VERCEL-RENDER.md).
 
 **A suggested 90-second walkthrough:**
 
@@ -69,7 +72,7 @@ All records, dates and notes are fictional. CASE-004's seeded reply is an exampl
 
 </details>
 
-The public guest preview is live. A recorded walkthrough remains a release task. The website's optional video section appears only after a real YouTube URL is configured; [video setup](docs/TEAM-POLISH.md) documents it.
+**Demo video:** recording pending. The working guest preview is available above. Add the real walkthrough URL here after upload; the website's optional video section is configured through [video setup](docs/TEAM-POLISH.md).
 
 ## Why a graph?
 
@@ -111,6 +114,9 @@ The proof endpoint returns the paths required by the executed `MATCH`, not a ful
 
 ## A workspace with a purpose
 
+<details>
+<summary><strong>Explore the pages and their workflows</strong></summary>
+
 | Surface | What you can do |
 | --- | --- |
 | **Overview & Evidence** | Read original claims and compare records about the selected pickup. |
@@ -118,7 +124,9 @@ The proof endpoint returns the paths required by the executed `MATCH`, not a ful
 | **Connections & Context lab** | Inspect returned evidence paths, preview source exclusion and check the coverage of saved explanations. |
 | **Investigation & Follow-up tasks** | Review supported rules, optionally run the constrained AI workflow and save an explicit manual reply outcome. |
 | **Case brief & History** | Prepare a source-linked fictional support draft, download JSON or print/save PDF, and inspect earlier tasks and notes. |
-| **Guest & saved account** | Start without signing in, or use optional Google/GitHub sign-in for a separate account-owned workspace. |
+| **Guest & saved account** | Explore immediately as a guest. Optional account sign-in is available on separately configured deployments; disabled on the public preview. |
+
+</details>
 
 <details>
 <summary><strong>The lamp sign-in experience</strong></summary>
@@ -143,6 +151,11 @@ The model invokes the required tools; it does not choose an open-ended plan, gen
 ## Run locally
 
 **Requirements:** Java 21+, installed Maven, Node 24/npm and Docker Compose. Use global `mvn` if Windows blocks the Maven wrapper.
+
+```powershell
+git clone https://github.com/OM2412/ReturnTrail.git
+cd ReturnTrail
+```
 
 From the repository root, start FalkorDB:
 
@@ -172,7 +185,7 @@ Open **http://127.0.0.1:5174**. Vite proxies the API and sign-in callbacks to Sp
 | --- | --- |
 | AI investigation | Set `GROQ_API_KEY` in the backend environment before starting Spring. |
 | Saved account | Configure Google OIDC or GitHub OAuth using [Login setup](docs/LOGIN-SETUP.md). |
-| Production HTTPS | Follow [Deployment](docs/DEPLOYMENT.md); use one backend instance and retain the FalkorDB volume. |
+| Hosting | [Current Render preview and deployment alternatives](docs/DEPLOYMENT.md); one backend instance is supported. |
 | Video / public metadata | See [Team and video setup](docs/TEAM-POLISH.md) and `frontend/.env.example`. |
 
 Keep OAuth secrets and model keys in backend environment variables, never frontend `VITE_*` settings. Without provider/model configuration, the guest reader, graph/context views and deterministic task workflow remain available.
@@ -183,7 +196,7 @@ The [verification workflow](https://github.com/OM2412/ReturnTrail/actions/workfl
 
 | Recorded check | Scope and evidence |
 | --- | --- |
-| **88 backend tests passed** | Default suite; two external-provider integration checks are opt-in and skipped by default. |
+| **90 backend tests passed; 2 skipped** | [Hosted run at `6b17316`, 18 October 2026](https://github.com/OM2412/ReturnTrail/actions/runs/39095246684): 92 total, zero failures/errors. Two provider integration checks are opt-in. |
 | **14 frontend Node tests passed** | Domain, source workflow, support draft and public-video input boundaries. |
 | **23 browser contract groups passed locally** | Mocked API responses; these do not establish real backend or provider behavior. |
 | **5 production integration groups passed locally** | Combined Spring JAR with actual FalkorDB, including guest entry and public/private route behavior. |
@@ -191,7 +204,7 @@ The [verification workflow](https://github.com/OM2412/ReturnTrail/actions/workfl
 | **Real hosted AI tool-calling check passed** | `openai/gpt-oss-120b`, 4 model requests, all 4 required tools in order, one OPEN local follow-up. [Public validation record](docs/PUBLIC-VALIDATION.md). |
 | **Landing/About accessibility scan** | Zero serious/critical axe findings in the tested desktop state; not a full accessibility certification. |
 
-Recorded results and exact limits: [Team/public validation](docs/TEAM-VALIDATION.md), [Context validation](docs/CONTEXT-VALIDATION.md) and [Workspace validation](docs/WORKSPACE-VALIDATION.md). The twenty labelled synthetic rule fixtures are a regression set, not a real-world accuracy benchmark.
+Current hosted evidence: [Public validation](docs/PUBLIC-VALIDATION.md). Earlier scoped checks: [Team](docs/TEAM-VALIDATION.md), [Context](docs/CONTEXT-VALIDATION.md), [Workspace](docs/WORKSPACE-VALIDATION.md). The twenty synthetic rule fixtures are a regression set, not a real-world accuracy benchmark. Human comprehension and commercial demand remain unvalidated; [the observation sheet](docs/USER-VALIDATION.md) is a blank research plan.
 
 <details>
 <summary><strong>Run the checks yourself</strong></summary>
@@ -213,11 +226,16 @@ With backend/frontend running, `test:workspace`, `test:inbox`, `test:context` an
 
 ## Boundaries that matter
 
+<details>
+<summary><strong>Supported rules, session limits and deployment scope</strong></summary>
+
 - **Focused prototype:** four seeded cases and bounded fictional text additions to existing pickups. No arbitrary uploads, OCR, AI extraction, courier integration or refund operation.
 - **Explicit rule scope:** customer cancellation versus courier unavailability on the same pickup, plus explicit missing-reason records. Other status combinations are outside this detector's scope.
 - **Evidence stays evidence:** a saved explanation is manually recorded and unverified. A resolved task is not case closure. Fresh sources can require fresh review.
 - **Session and deployment limits:** guests expire after two hours of inactivity; backend restarts invalidate in-memory sessions. Saved account graphs persist while the database is retained. One backend replica is supported.
 - **Bounded consistency:** combined reads check versions and retry once before returning 409. Manual database edits bypass application version counters. Health/readiness does not prove that Groq is available.
+
+</details>
 
 ## Team
 
@@ -229,8 +247,8 @@ With backend/frontend running, `test:workspace`, `test:inbox`, `test:context` an
 
 Both teammates contribute across frontend and backend. Portrait preparation and the edited-image disclosure are recorded in [Photo preparation](docs/PHOTO-EDIT.md).
 
-ChatGPT assisted with planning and debugging. The team reviews, code , runs and verifies the project and is responsible for explaining the submitted code and graph model.
+ChatGPT/Codex assisted with planning, implementation, debugging, tests and documentation. The team is responsible for reviewing and verifying the submitted work and explaining its code, graph model and technical decisions.
 
 ---
 
-**Explore the implementation:** [API](docs/API.md) · [Graph queries](docs/GRAPH-QUERIES.cypher) · [Evidence workflow](docs/EVIDENCE-WORKFLOW.md) · [Resource research](docs/RESOURCE-RESEARCH.md) · [Release checklist](docs/QUALITY-GATES.md) · [User observation sheet](docs/USER-VALIDATION.md)
+**Continue exploring:** [Documentation index](docs/README.md) · [API](docs/API.md) · [Graph queries](docs/GRAPH-QUERIES.cypher) · [Current validation](docs/PUBLIC-VALIDATION.md) · [Release checklist](docs/QUALITY-GATES.md)

@@ -1,8 +1,22 @@
-# The 95+ acceptance target
+# Release checklist and supporting evidence
 
-This is a quality target, not a claimed score or a promise of winning. The earlier audit used five weighted phases: product 20%, UI 20%, graph/backend 30%, trust 20%, delivery 10%. This update does not change those weights to make its own score look better. The organizer's public page did not publish those percentages.
+Updated 18 October 2026. This is an internal acceptance checklist, not an official judging rubric or a claimed score. The preparation weights were product 20%, UI 20%, graph/backend 30%, trust 20% and delivery 10%; the organizer did not publish those percentages.
 
 Software checks establish a bounded implementation. They cannot establish customer demand, real-world refund outcomes, public uptime or Google ranking. A 95+ claim across every phase is not justified while those external facts remain unverified.
+
+## Completed checks and remaining scope
+
+| Gate | Recorded status |
+| --- | --- |
+| Public guest deployment | [Render preview](https://returntrail-api.onrender.com) is live; [five public API workflow groups passed](PUBLIC-VALIDATION.md). |
+| Actual model investigation | One hosted Groq run completed four model requests and all four required tools in order. This does not establish continuous model availability or general accuracy. |
+| Default hosted CI | [Run at `6b17316`](https://github.com/OM2412/ReturnTrail/actions/runs/39095246684) passed: 90 backend tests successful, two provider checks skipped; frontend lint/tests/build and browser contracts passed. |
+| Production container checks | [Combined deployment](https://github.com/OM2412/ReturnTrail/actions/runs/39093978200) and [backend-only deployment](https://github.com/OM2412/ReturnTrail/actions/runs/39093978115) passed at `efabfdc`. Runner persistence checks do not establish persistence on FalkorDB Cloud Free. |
+| Provider sign-in | Optional implementation exists; both providers are disabled on the synthetic public preview. Real public OAuth acceptance remains outside the current deployment. |
+| Human validation and video | User observations, commercial validation and the final working demo video remain pending. |
+| Production durability | The public free graph has no TLS, persistence or backups. Durable saved accounts and real customer data are outside this preview. |
+
+The five phases below describe acceptance criteria; they are not a claim that every item has passed.
 
 ## Phase 1 — Product and market
 
@@ -44,14 +58,15 @@ Software checks establish a bounded implementation. They cannot establish custom
 4. The final video matches the final build, shows a graph-dependent changed action, and every submission link is checked.
 5. README, current validation, architecture, limitations and AI assistance/asset attribution agree. Do not claim search rank, users, benchmark accuracy or official integrations that were not established.
 
-## Remaining external gates
+## Remaining release work
 
-- Actual Google account configuration and a real external callback.
-- One real Groq/model run using the operator's key.
-- Target-host Docker/Caddy/TLS/backup and persistence validation; no Docker daemon or hosting credentials were available in this workspace.
-- A hosted GitHub Actions run after the user pushes; local command equivalents are tested separately.
-- Human comprehension observations, commercial validation and final demo video.
-- Domain availability/ownership, Search Console and eventual search performance.
+- Record and link the final working demo video.
+- Observe nontechnical users using the brief workflow and record actual results in [USER-VALIDATION.md](USER-VALIDATION.md).
+- Complete a clean-checkout walkthrough on a teammate's machine.
+- Configure the final public metadata origin and verify canonical/share/sitemap output after the deployment rebuild; see [Deployment](DEPLOYMENT.md#seo-and-sharing).
+- Recheck the final public UI on mobile, keyboard and reduced motion; prior API checks are not a new browser audit.
+- For a future saved-account release: enable TLS and durable graph storage, test backup/restore and complete real provider callback/account-isolation checks.
+- A custom domain and Search Console are optional future work, not evidence of search ranking.
 
 ## Keep scope under control before 18 October
 

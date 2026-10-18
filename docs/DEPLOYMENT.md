@@ -1,12 +1,54 @@
-# Same-origin deployment and local fallback
+# Deployment: current preview and alternatives
 
-The production app image, real FalkorDB API behavior and database-volume retention across a database container restart were verified on a hosted Ubuntu amd64 runner on 17 October 2026. This is not a public deployment. Oracle account/VM provisioning, native ARM execution, Caddy/public TLS, real provider callbacks and target-host backup/restore still require acceptance checks.
+## Current public preview
 
-For a card-free temporary public preview from a laptop, use [PUBLIC-DEMO.md](PUBLIC-DEMO.md). That route runs a separate local Docker stack and requires the laptop to stay awake and online; it is not an always-on hosted deployment.
+**Live:** https://returntrail-api.onrender.com  
+**Readiness:** https://returntrail-api.onrender.com/actuator/health/readiness
 
-For laptop-independent Vercel + Render deployment with external FalkorDB, see [VERCEL-RENDER.md](VERCEL-RENDER.md). Its free preview has different persistence, encryption and cold-start limits; review those before choosing it.
+| Component | Current deployment |
+| --- | --- |
+| Frontend and API | One Render Docker web service; the root `Dockerfile` embeds React into the Spring JAR. |
+| Graph | External FalkorDB Cloud Free; FalkorDB remains the primary database. |
+| Access | Synthetic guest workspaces; Google/GitHub sign-in disabled. |
+| Host dependency | Runs independently of a local laptop. |
+| Verification | [Public checks — 18 October 2026](PUBLIC-VALIDATION.md): five API workflow groups and one real four-tool AI investigation. |
 
-## Supported shape
+Render Free can sleep after 15 minutes without incoming traffic; waking can take about a minute. Backend restarts invalidate in-memory sessions. FalkorDB Free has no TLS, persistence or backups and can stop/delete inactive instances. Database credentials travel without transport encryption on that tier. Use fictional records only and export the brief; this preview does not offer durable saved accounts.
+
+### Reproduce this hosting shape
+
+1. Create a dedicated external FalkorDB instance. Copy the database host, connection port, username and password from its console. Use host only, without a URI scheme, quotes, whitespace or a port suffix.
+2. Create a Render Docker web service from this repository, branch `main`, repository root, **Dockerfile path `Dockerfile`**. This is the combined image. The separate `deploy/Render.Dockerfile` and `render.yaml` belong to the backend-only Vercel alternative.
+3. Add the database/runtime settings below in Render. Keep credentials out of Git and frontend variables.
+4. Set the health check path to `/actuator/health/readiness`. The image listens on `0.0.0.0` and uses Render's supplied `PORT`.
+5. Deploy, wait for readiness UP, then test guest entry, source comparison, task/reply history and brief export on the public origin.
+
+| Setting | Value |
+| --- | --- |
+| `FALKORDB_HOST`, `FALKORDB_PORT` | Exact database connection endpoint from the console |
+| `FALKORDB_USERNAME`, `FALKORDB_PASSWORD` | Exact issued credentials; the current instance uses username `falkordb`, not an assumed default |
+| `FALKORDB_SSL` | `false` for the non-TLS Free endpoint; `true` only with a TLS-enabled endpoint |
+| `RETURNTRAIL_PUBLIC_URL` | `https://returntrail-api.onrender.com` for this deployment; use your own final HTTPS origin for another service |
+| `SESSION_COOKIE_SECURE` | `true` |
+| `GOOGLE_LOGIN_ENABLED`, `GITHUB_LOGIN_ENABLED` | `false` on this non-durable guest preview |
+| `GROQ_API_KEY` | Backend-only model key if enabling AI investigation |
+| `PUBLIC_SITE_URL` | Public HTTPS origin, consumed by the combined Docker build for SEO/share metadata |
+
+A responding homepage alone does not establish graph or model availability. Readiness tests the graph; an actual AI investigation is a separate check. See [PUBLIC-VALIDATION.md](PUBLIC-VALIDATION.md) for the observed scope.
+
+### Monitoring
+
+The operator configured three UptimeRobot monitors and confirmed that one targets the readiness URL above. The 18 October dashboard showed all three UP at five-minute intervals. This is an observed status, not an uptime guarantee; alert delivery and a public status-page URL were not independently checked. Monitoring does not add database persistence, TLS or backups.
+
+## Choose an alternative
+
+| Shape | Guide | Boundary |
+| --- | --- | --- |
+| Vercel frontend + Render API | [VERCEL-RENDER.md](VERCEL-RENDER.md) | Separate backend-only image; not required for the current combined preview. |
+| Temporary laptop HTTPS preview | [PUBLIC-DEMO.md](PUBLIC-DEMO.md) | Separate local Docker stack; laptop must stay awake and online. |
+| Private persistent graph + Caddy HTTPS | Instructions below | Requires a host, actual target-host TLS/backup acceptance and one backend replica. |
+
+## Private Docker production route
 
 One Java backend serves the production frontend and API. FalkorDB stays on a private container network with a persistent volume; Caddy terminates HTTPS and compresses responses. Never expose an unauthenticated graph/database browser directly to the internet. Current sessions/lifecycle/budgets are local, so run **one backend replica**.
 
@@ -39,15 +81,19 @@ The base runtime/tooling tags in this source are version-family tags; verify/pin
 - A real Groq investigation returns the actual trace. A rule review remains explicitly labeled when no AI key is configured.
 - Inspect actual logs for failures without publishing secrets or provider callback codes.
 
-## SEO/share source
+## SEO and sharing
 
-A production build with `VITE_PUBLIC_URL=https://your-host` emits a public-only sitemap, canonical homepage URL and absolute sharing image URL. Private app routes are noindex both in the production SPA fallback response and client navigation. Noindex/robots rules are not an authorization mechanism.
+The combined root `Dockerfile` accepts `PUBLIC_SITE_URL` as a build argument and passes it to Vite as `VITE_PUBLIC_URL`. Configure the final public origin **before rebuilding the image**. Changing only the runtime `RETURNTRAIL_PUBLIC_URL` does not regenerate built HTML.
+
+A frontend build with `VITE_PUBLIC_URL=https://your-host` emits a public-only sitemap, canonical homepage URL and absolute sharing image URL. Private app routes are noindex both in the production SPA fallback response and client navigation. Noindex/robots rules are not an authorization mechanism.
 
 ```powershell
 $env:VITE_PUBLIC_URL = "https://your-host"
 npm.cmd run build
 Remove-Item Env:VITE_PUBLIC_URL
 ```
+
+Verify the rebuilt homepage source contains the correct canonical and Open Graph image, and `/sitemap.xml` returns the public URL set. Before metadata configuration, the 18 October public check found those tags absent and the sitemap returned 404; this is a remaining configuration check, not a claimed completed optimization.
 
 An unset origin omits canonical/sitemap claims rather than inventing a localhost production URL. Public HTML guides work without React. There is no guarantee of indexing, first rank or rich results.
 
@@ -61,11 +107,11 @@ The pinned FalkorDB image manifest lists both `linux/amd64` and `linux/arm64`; t
 
 ## No-hosting fallback
 
-The event page prefers a live deployment, allowing a complete local setup and a working demo video when deployment is unavailable. Prepare a clean-checkout walkthrough, keep the graph/model configuration available locally and record the actual tested flow. Verify the final submission form's requirements.
+The event rules require a working demo video and either a live deployment or complete local setup instructions. Prepare a clean-checkout walkthrough, keep the graph/model configuration available locally and record the actual tested flow. Verify the final submission form's requirements.
 
 https://www.wemakedevs.org/hackathons/falkordb
 
-## Free VM account setup
+## Optional VM route
 
 Oracle Always Free is an optional VM route, subject to signup verification and regional capacity. Create the account at https://signup.cloud.oracle.com/ and select the home region carefully: Always Free compute must be provisioned in that region, and the home region cannot be changed after signup. Do not upgrade to Pay As You Go or create resources outside the Always Free allowances for this route.
 
