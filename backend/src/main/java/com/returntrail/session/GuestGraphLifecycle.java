@@ -1,6 +1,7 @@
 package com.returntrail.session;
 
 import com.falkordb.Driver;
+import com.returntrail.graph.GraphFailureDiagnostics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,7 +86,7 @@ public class GuestGraphLifecycle {
             existing = new HashSet<>(driver.listGraphs());
         } catch (RuntimeException exception) {
             log.warn("Guest graph scan failed: {}",
-                    exception.getClass().getSimpleName());
+                    GraphFailureDiagnostics.types(exception));
             return;
         }
 
