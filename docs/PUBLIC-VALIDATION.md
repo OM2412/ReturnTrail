@@ -100,8 +100,23 @@ Enabling providers exposed an unrelated-path resolver bug: `GET /` returned
 HTTP 500 because an empty path segment was used as a registration ID. The old
 resolver failure was reproduced locally; three regression tests pass for the
 route-scoped fix, including blank paths, disabled/unknown providers and
-state/PKCE/public callback preservation with a context path. Public deployment
-of this fix requires its own post-deploy homepage check.
+state/PKCE/public callback preservation with a context path. The fix at `275fb37` subsequently passed its public post-deploy check:
+
+- `GET /` and `GET /signin`: HTTP 200 with the React shell.
+- Graph readiness: HTTP 200, status UP; the public sitemap remains HTTP 200 XML.
+- Both configured flags remain true and both authorization redirects retain the
+  correct public callback and minimal scopes.
+- A fresh CSRF-protected guest session opens with status READY and returns the
+  expected two CASE-001 evidence records. Its temporary guest session was closed.
+- No model request or completed external provider login was made in this check.
+
+All three hosted workflows passed at the same fix commit:
+[default verification](https://github.com/OM2412/ReturnTrail/actions/runs/39101507785),
+[production container](https://github.com/OM2412/ReturnTrail/actions/runs/39101507766)
+and [split deployment](https://github.com/OM2412/ReturnTrail/actions/runs/39101507767).
+The default suite reports 95 backend tests total: 93 successful, two skipped,
+zero failures/errors; frontend tests report 14 passed. Real Google/GitHub consent,
+callback completion, logout and re-login still require browser acceptance.
 
 ## Hosting boundaries
 

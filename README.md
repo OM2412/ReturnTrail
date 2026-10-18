@@ -196,7 +196,7 @@ The [verification workflow](https://github.com/OM2412/ReturnTrail/actions/workfl
 
 | Recorded check | Scope and evidence |
 | --- | --- |
-| **90 backend tests passed; 2 skipped** | [Hosted run at `6b17316`, 18 October 2026](https://github.com/OM2412/ReturnTrail/actions/runs/39095246684): 92 total, zero failures/errors. Two provider integration checks are opt-in. |
+| **93 backend tests passed; 2 skipped** | [Hosted run at `275fb37`, 18 October 2026](https://github.com/OM2412/ReturnTrail/actions/runs/39101507785): 95 total, zero failures/errors, including the OAuth homepage regression checks. Two provider integration checks are opt-in. |
 | **14 frontend Node tests passed** | Domain, source workflow, support draft and public-video input boundaries. |
 | **23 browser contract groups passed locally** | Mocked API responses; these do not establish real backend or provider behavior. |
 | **5 production integration groups passed locally** | Combined Spring JAR with actual FalkorDB, including guest entry and public/private route behavior. |
