@@ -52,6 +52,76 @@ Invoke-RestMethod "http://127.0.0.1:5174/api/auth/session" | ConvertTo-Json -Dep
 
 GitHub is an optional developer choice. Register an OAuth App with callback `http://127.0.0.1:5174/login/oauth2/code/github`, set `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` and `GITHUB_LOGIN_ENABLED=true` in the backend terminal. Google and GitHub identities are distinct even if display names or email addresses match. Existing GitHub registry keys are preserved; old in-memory sessions require re-login after the backend restart.
 
+## Public deployment: Google and GitHub
+
+Current origin: `https://returntrail-api.onrender.com`.
+
+Local terminal environment variables are not copied to Render. A working local
+provider login does not configure the hosted service.
+
+### Register exact public callbacks
+
+| Provider | Authorized callback |
+| --- | --- |
+| Google Web OAuth client | `https://returntrail-api.onrender.com/login/oauth2/code/google` |
+| GitHub OAuth App | `https://returntrail-api.onrender.com/login/oauth2/code/github` |
+
+Use `https://returntrail-api.onrender.com` as the public homepage/origin where
+the provider requests it. Keep local and production configurations distinct.
+Retain a local callback only in an appropriate development client; do not replace
+a development secret without updating the corresponding environment.
+
+For Google, check the actual audience and publishing state. A configuration
+restricted to named test accounts cannot be assumed to admit arbitrary judges.
+The server requests only `openid profile`; it does not request Gmail access.
+Complete any console-required branding, audience and ownership steps before
+claiming public access. Do not add unrelated scopes to bypass a setup error.
+
+### Configure Render privately
+
+Enter the existing client credentials directly in the Render service's
+Environment editor. Do not send secrets in chat, paste them in screenshots,
+commit them, or put them in `VITE_*` variables.
+
+| Backend variable | Required value |
+| --- | --- |
+| `GOOGLE_CLIENT_ID` | Google Web OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | Matching Google client secret |
+| `GITHUB_CLIENT_ID` | GitHub OAuth App client ID |
+| `GITHUB_CLIENT_SECRET` | Matching GitHub client secret |
+| `RETURNTRAIL_PUBLIC_URL` | `https://returntrail-api.onrender.com` |
+| `SESSION_COOKIE_SECURE` | `true` |
+| `GOOGLE_LOGIN_ENABLED` | `true`, after the Google credentials and callback are configured |
+| `GITHUB_LOGIN_ENABLED` | `true`, after the GitHub credentials and callback are configured |
+
+Missing enabled-provider credentials deliberately prevent startup. Add and review
+all required values before saving/rebuilding. `PUBLIC_SITE_URL` configures
+built public metadata; it is separate from OAuth registration and is not a
+provider credential.
+
+The current free cloud graph has no TLS, persistence or backups. Account identity
+bindings are stored in that graph; sign-in does not add transport encryption or
+durability. This setup remains a fictional-data prototype, with no durable-work
+promise or real customer-record intake. Review these limits before enabling
+accounts; a TLS-enabled, durable database is the appropriate deployment for a
+saved-account service.
+
+### Acceptance on the actual public origin
+
+After rebuilding, inspect `GET /api/auth/session`. Both configured flags should
+be true. That proves registration presence, not successful provider login.
+Then independently exercise each provider:
+
+1. Sign in from `/signin` and return to the account-owned case library.
+2. Confirm the displayed provider and account workspace, then save a fictional note.
+3. POST sign out; sign back in with the same provider account and inspect the note.
+4. Check another account cannot read the first account's workspace.
+5. Cancel a provider flow and confirm guest entry still works.
+
+Google and GitHub accounts remain separate even if their names match.
+Do not merge them by name/email. Do not report either real provider as tested
+until its actual authorization and callback have completed.
+
 ## Workspace behavior
 
 - New sign-in opens a separate saved fictional workspace; it does not import a guest's text, tasks or notes. Export guest work first.
