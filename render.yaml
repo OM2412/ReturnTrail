@@ -1,0 +1,30 @@
+# Synthetic guest preview. External FalkorDB is required; no database runs on Render's ephemeral disk.
+services:
+  - type: web
+    name: returntrail-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./deploy/Render.Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health/readiness
+    envVars:
+      - key: FALKORDB_HOST
+        sync: false
+      - key: FALKORDB_PORT
+        sync: false
+      - key: FALKORDB_USERNAME
+        sync: false
+      - key: FALKORDB_PASSWORD
+        sync: false
+      - key: FALKORDB_SSL
+        value: "false"
+      - key: RETURNTRAIL_PUBLIC_URL
+        sync: false
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: GOOGLE_LOGIN_ENABLED
+        value: "false"
+      - key: GITHUB_LOGIN_ENABLED
+        value: "false"
+      - key: GROQ_API_KEY
+        sync: false

@@ -1,0 +1,80 @@
+name: Split deployment check
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'deploy/Render.Dockerfile'
+      - 'deploy/configure-vercel.mjs'
+      - 'deploy/tests/vercel-config.test.mjs'
+      - 'render.yaml'
+      - '.github/workflows/split-deployment-check.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  authenticated-backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Check Vercel route generation and unsafe inputs
+        run: node --test deploy/tests/vercel-config.test.mjs
+      - name: Build backend-only Render image
+        run: docker build -f deploy/Render.Dockerfile -t returntrail-split-check .
+      - name: Start authenticated FalkorDB and memory-limited backend
+        run: |
+          docker network create returntrail-split-check
+          docker run -d --name rt-split-db --network returntrail-split-check \
+            -e 'REDIS_ARGS=--requirepass fixture:+@pw' \
+            falkordb/falkordb@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a
+          docker run -d --name rt-split-api --network returntrail-split-check --memory=512m \
+            -p 127.0.0.1:19085:9000 -e PORT=9000 \
+            -e FALKORDB_HOST=rt-split-db -e FALKORDB_PORT=6379 \
+            -e FALKORDB_USERNAME=default -e 'FALKORDB_PASSWORD=fixture:+@pw' \
+            -e FALKORDB_SSL=false -e SESSION_COOKIE_SECURE=false \
+            -e RETURNTRAIL_PUBLIC_URL=http://127.0.0.1:19085 returntrail-split-check
+          ready=false
+          for attempt in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:19085/actuator/health/readiness > /tmp/rt-split-health.json; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+          test "$ready" = true
+          node -e "const fs=require('fs');if(JSON.parse(fs.readFileSync('/tmp/rt-split-health.json')).status!=='UP')process.exit(1)"
+      - name: Verify guest writes and source isolation through the authenticated driver
+        run: API_URL=http://127.0.0.1:19085 node frontend/tests/evidence-api.mjs
+      - name: Verify image health and wrong-password rejection
+        run: |
+          test "$(docker inspect --format '{{.State.OOMKilled}}' rt-split-api)" = false
+          docker run -d --name rt-split-wrong --network returntrail-split-check --memory=512m \
+            -p 127.0.0.1:19086:9000 -e PORT=9000 \
+            -e FALKORDB_HOST=rt-split-db -e FALKORDB_PORT=6379 \
+            -e FALKORDB_USERNAME=default -e FALKORDB_PASSWORD=incorrect-fixture \
+            -e RETURNTRAIL_PUBLIC_URL=http://127.0.0.1:19086 returntrail-split-check
+          ready=false
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:19086/actuator/health/liveness > /dev/null; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+          test "$ready" = true
+          test "$(curl -s -o /tmp/rt-split-wrong.json -w '%{http_code}' http://127.0.0.1:19086/actuator/health/readiness)" = 503
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          docker logs --tail 60 rt-split-api || true
+          docker logs --tail 30 rt-split-wrong || true
+      - name: Clean up isolated CI containers
+        if: always()
+        run: |
+          docker rm -f rt-split-api rt-split-wrong rt-split-db || true
+          docker network rm returntrail-split-check || true

@@ -4,6 +4,8 @@ The production app image, real FalkorDB API behavior and database-volume retenti
 
 For a card-free temporary public preview from a laptop, use [PUBLIC-DEMO.md](PUBLIC-DEMO.md). That route runs a separate local Docker stack and requires the laptop to stay awake and online; it is not an always-on hosted deployment.
 
+For laptop-independent Vercel + Render deployment with external FalkorDB, see [VERCEL-RENDER.md](VERCEL-RENDER.md). Its free preview has different persistence, encryption and cold-start limits; review those before choosing it.
+
 ## Supported shape
 
 One Java backend serves the production frontend and API. FalkorDB stays on a private container network with a persistent volume; Caddy terminates HTTPS and compresses responses. Never expose an unauthenticated graph/database browser directly to the internet. Current sessions/lifecycle/budgets are local, so run **one backend replica**.
