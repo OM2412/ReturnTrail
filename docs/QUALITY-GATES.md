@@ -9,6 +9,7 @@ Software checks establish a bounded implementation. They cannot establish custom
 | Gate | Recorded status |
 | --- | --- |
 | Public guest deployment | [Render preview](https://returntrail-api.onrender.com) is live; [five public API workflow groups passed](PUBLIC-VALIDATION.md). |
+| Public metadata | The combined image was rebuilt with its actual public origin. Canonical/share metadata, PNG, robots declaration and four-page sitemap passed the live check; see [Public validation](PUBLIC-VALIDATION.md). |
 | Actual model investigation | One hosted Groq run completed four model requests and all four required tools in order. This does not establish continuous model availability or general accuracy. |
 | Default hosted CI | [Run at `6b17316`](https://github.com/OM2412/ReturnTrail/actions/runs/39095246684) passed: 90 backend tests successful, two provider checks skipped; frontend lint/tests/build and browser contracts passed. |
 | Production container checks | [Combined deployment](https://github.com/OM2412/ReturnTrail/actions/runs/39093978200) and [backend-only deployment](https://github.com/OM2412/ReturnTrail/actions/runs/39093978115) passed at `efabfdc`. Runner persistence checks do not establish persistence on FalkorDB Cloud Free. |
@@ -63,7 +64,7 @@ The five phases below describe acceptance criteria; they are not a claim that ev
 - Record and link the final working demo video.
 - Observe nontechnical users using the brief workflow and record actual results in [USER-VALIDATION.md](USER-VALIDATION.md).
 - Complete a clean-checkout walkthrough on a teammate's machine.
-- Configure the final public metadata origin and verify canonical/share/sitemap output after the deployment rebuild; see [Deployment](DEPLOYMENT.md#seo-and-sharing).
+- Retain and recheck public metadata when changing the deployment origin; the current origin's canonical/share/sitemap checks have passed.
 - Recheck the final public UI on mobile, keyboard and reduced motion; prior API checks are not a new browser audit.
 - For a future saved-account release: enable TLS and durable graph storage, test backup/restore and complete real provider callback/account-isolation checks.
 - A custom domain and Search Console are optional future work, not evidence of search ranking.

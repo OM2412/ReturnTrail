@@ -64,8 +64,18 @@ public browser audit.
 A subsequent read-only public check found the homepage and readiness still HTTP
 200, with readiness UP. The homepage source had no canonical/Open Graph image
 tags, `robots.txt` had no sitemap declaration and `/sitemap.xml` returned 404.
-Configure the combined image's public-origin build argument and verify the
-rebuilt output before marking public metadata complete.
+The missing build-time origin was then configured as
+`PUBLIC_SITE_URL=https://returntrail-api.onrender.com` and the combined image
+was rebuilt. The subsequent live checks confirmed:
+
+- Homepage canonical and `og:url` use the actual public HTTPS origin.
+- `og:image` points to `/share-card.png`; the PNG returns HTTP 200.
+- `robots.txt` declares the public sitemap.
+- `/sitemap.xml` returns HTTP 200 XML with only `/`, `/about`,
+  `/how-it-works.html` and `/privacy.html`.
+- Homepage and graph readiness remain HTTP 200, with readiness UP.
+
+These are configuration/output checks, not a promise of indexing or search rank.
 
 The operator separately configured UptimeRobot monitoring and confirmed one
 monitor targets the readiness endpoint. The supplied 18 October dashboard showed

@@ -93,7 +93,7 @@ npm.cmd run build
 Remove-Item Env:VITE_PUBLIC_URL
 ```
 
-Verify the rebuilt homepage source contains the correct canonical and Open Graph image, and `/sitemap.xml` returns the public URL set. Before metadata configuration, the 18 October public check found those tags absent and the sitemap returned 404; this is a remaining configuration check, not a claimed completed optimization.
+Verify the rebuilt homepage source contains the correct canonical and Open Graph image, and `/sitemap.xml` returns the public URL set. The initial 18 October public check found those tags absent and the sitemap returned 404. After configuring `PUBLIC_SITE_URL=https://returntrail-api.onrender.com` and rebuilding, the homepage metadata, sharing PNG, robots sitemap declaration and four-page XML sitemap passed the live check; see [the validation record](PUBLIC-VALIDATION.md). Keep the origin setting when rebuilding this deployment.
 
 An unset origin omits canonical/sitemap claims rather than inventing a localhost production URL. Public HTML guides work without React. There is no guarantee of indexing, first rank or rich results.
 
