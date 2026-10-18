@@ -8,6 +8,7 @@
 
 <p align="center">
   <a href="https://returntrail-api.onrender.com">Open live demo</a> ·
+  <a href="https://youtu.be/5lfysyQZOO0">Watch demo video</a> ·
   <a href="#try-the-demo">Demo walkthrough</a> ·
   <a href="#why-a-graph">Why a graph?</a> ·
   <a href="#run-locally">Run locally</a> ·
@@ -38,6 +39,11 @@ Built for [WeMakeDevs × FalkorDB Graph Hacks](https://www.wemakedevs.org/hackat
 For **CASE-001**, both records describe **PICKUP-001**. The app retains both claims and prepares: “Please confirm why pickup PICKUP-001 failed and explain the conflicting recorded reasons.” The resulting brief links back to the original sources. A later source can require fresh review even when an earlier task was resolved.
 
 ## Try the demo
+
+[![Watch the ReturnTrail demo — one pickup, two conflicting stories](https://img.youtube.com/vi/5lfysyQZOO0/hqdefault.jpg)](https://youtu.be/5lfysyQZOO0)
+
+**[Watch the complete demo on YouTube →](https://youtu.be/5lfysyQZOO0)** · 4 minutes 15 seconds  
+Compare original evidence, inspect graph connections, run the AI investigation, record a manual task outcome, and review what changes when a new source arrives.
 
 **[Open ReturnTrail →](https://returntrail-api.onrender.com)**  
 https://returntrail-api.onrender.com — choose **Explore as a guest**; no account or personal model key required.
@@ -71,8 +77,6 @@ For a memory example, open **CASE-004**, add a reviewed fictional source through
 All records, dates and notes are fictional. CASE-004's seeded reply is an example, not an independently verified courier response. “No supported disagreement” describes this bounded rule check, not whether a return is valid.
 
 </details>
-
-**Demo video:** recording pending. The working guest preview is available above. Add the real walkthrough URL here after upload; the website's optional video section is configured through [video setup](docs/TEAM-POLISH.md).
 
 ## Why a graph?
 
