@@ -13,7 +13,7 @@ Software checks establish a bounded implementation. They cannot establish custom
 | Actual model investigation | One hosted Groq run completed four model requests and all four required tools in order. This does not establish continuous model availability or general accuracy. |
 | Default hosted CI | [Run at `6b17316`](https://github.com/OM2412/ReturnTrail/actions/runs/39095246684) passed: 90 backend tests successful, two provider checks skipped; frontend lint/tests/build and browser contracts passed. |
 | Production container checks | [Combined deployment](https://github.com/OM2412/ReturnTrail/actions/runs/39093978200) and [backend-only deployment](https://github.com/OM2412/ReturnTrail/actions/runs/39093978115) passed at `efabfdc`. Runner persistence checks do not establish persistence on FalkorDB Cloud Free. |
-| Provider sign-in | Optional implementation exists; both providers are disabled on the synthetic public preview. Real public OAuth acceptance remains outside the current deployment. |
+| Provider sign-in | Both public registrations are enabled; authorization redirects target the real providers with the correct public callbacks. Completed Google/GitHub login, logout, re-login and account isolation still require real-browser acceptance. |
 | Human validation and video | User observations, commercial validation and the final working demo video remain pending. |
 | Production durability | The public free graph has no TLS, persistence or backups. Durable saved accounts and real customer data are outside this preview. |
 
@@ -65,6 +65,7 @@ The five phases below describe acceptance criteria; they are not a claim that ev
 - Observe nontechnical users using the brief workflow and record actual results in [USER-VALIDATION.md](USER-VALIDATION.md).
 - Complete a clean-checkout walkthrough on a teammate's machine.
 - Retain and recheck public metadata when changing the deployment origin; the current origin's canonical/share/sitemap checks have passed.
+- Complete Google and GitHub browser sign-in, cancellation, logout, re-login and account isolation checks on the final origin.
 - Recheck the final public UI on mobile, keyboard and reduced motion; prior API checks are not a new browser audit.
 - For a future saved-account release: enable TLS and durable graph storage, test backup/restore and complete real provider callback/account-isolation checks.
 - A custom domain and Search Console are optional future work, not evidence of search ranking.

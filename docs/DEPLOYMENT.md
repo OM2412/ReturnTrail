@@ -9,7 +9,7 @@
 | --- | --- |
 | Frontend and API | One Render Docker web service; the root `Dockerfile` embeds React into the Spring JAR. |
 | Graph | External FalkorDB Cloud Free; FalkorDB remains the primary database. |
-| Access | Synthetic guest workspaces; Google/GitHub sign-in disabled. |
+| Access | Fictional guest and account workspaces; Google/GitHub registrations configured. Real provider callback acceptance is checked separately. |
 | Host dependency | Runs independently of a local laptop. |
 | Verification | [Public checks — 18 October 2026](PUBLIC-VALIDATION.md): five API workflow groups and one real four-tool AI investigation. |
 
@@ -30,7 +30,8 @@ Render Free can sleep after 15 minutes without incoming traffic; waking can take
 | `FALKORDB_SSL` | `false` for the non-TLS Free endpoint; `true` only with a TLS-enabled endpoint |
 | `RETURNTRAIL_PUBLIC_URL` | `https://returntrail-api.onrender.com` for this deployment; use your own final HTTPS origin for another service |
 | `SESSION_COOKIE_SECURE` | `true` |
-| `GOOGLE_LOGIN_ENABLED`, `GITHUB_LOGIN_ENABLED` | `false` on this non-durable guest preview |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Backend-only credentials from the corresponding provider clients; see [public login setup](LOGIN-SETUP.md#public-deployment-google-and-github) |
+| `GOOGLE_LOGIN_ENABLED`, `GITHUB_LOGIN_ENABLED` | The current operator-enabled preview uses `true`; add matching credentials and exact public callbacks before enabling either provider. A new guest-only copy can leave both `false`. |
 | `GROQ_API_KEY` | Backend-only model key if enabling AI investigation |
 | `PUBLIC_SITE_URL` | Public HTTPS origin, consumed by the combined Docker build for SEO/share metadata |
 

@@ -42,7 +42,7 @@ For **CASE-001**, both records describe **PICKUP-001**. The app retains both cla
 **[Open ReturnTrail →](https://returntrail-api.onrender.com)**  
 https://returntrail-api.onrender.com — choose **Explore as a guest**; no account or personal model key required.
 
-> **Free preview:** Google/GitHub sign-in is disabled here. Render may need about a minute to wake after inactivity; backend restarts reset sessions. The free cloud database has no persistence or backups, so preview work can be lost. Use fictional data and export your brief. [Current hosting and limits](docs/DEPLOYMENT.md#current-public-preview).
+> **Free preview:** Google/GitHub sign-in is configured; guest entry remains available. Render may need about a minute to wake after inactivity; backend restarts reset sessions. The free cloud database has no persistence or backups, so preview work can be lost. Use fictional data and export your brief. [Current hosting and limits](docs/DEPLOYMENT.md#current-public-preview).
 
 ![Actual ReturnTrail practice workspace showing two sources, a pickup disagreement and a pending question](docs/assets/workspace.webp)
 
@@ -124,7 +124,7 @@ The proof endpoint returns the paths required by the executed `MATCH`, not a ful
 | **Connections & Context lab** | Inspect returned evidence paths, preview source exclusion and check the coverage of saved explanations. |
 | **Investigation & Follow-up tasks** | Review supported rules, optionally run the constrained AI workflow and save an explicit manual reply outcome. |
 | **Case brief & History** | Prepare a source-linked fictional support draft, download JSON or print/save PDF, and inspect earlier tasks and notes. |
-| **Guest & saved account** | Explore immediately as a guest. Optional account sign-in is available on separately configured deployments; disabled on the public preview. |
+| **Guest & saved account** | Explore immediately as a guest. Google/GitHub account entry is configured on the public preview. Account work is separate from guest work and depends on the database being retained. |
 
 </details>
 
@@ -202,6 +202,7 @@ The [verification workflow](https://github.com/OM2412/ReturnTrail/actions/workfl
 | **5 production integration groups passed locally** | Combined Spring JAR with actual FalkorDB, including guest entry and public/private route behavior. |
 | **5 public API workflow groups passed** | Tested on the actual Render URL with managed FalkorDB on 18 October 2026; includes source writes, retry/version protection, history and separate guest isolation. |
 | **Real hosted AI tool-calling check passed** | `openai/gpt-oss-120b`, 4 model requests, all 4 required tools in order, one OPEN local follow-up. [Public validation record](docs/PUBLIC-VALIDATION.md). |
+| **Public OAuth configuration checked** | Both provider registrations are enabled and redirect to their real authorization endpoints with the exact public callbacks. Completed sign-in, logout and re-login still need real-browser acceptance. |
 | **Landing/About accessibility scan** | Zero serious/critical axe findings in the tested desktop state; not a full accessibility certification. |
 
 Current hosted evidence: [Public validation](docs/PUBLIC-VALIDATION.md). Earlier scoped checks: [Team](docs/TEAM-VALIDATION.md), [Context](docs/CONTEXT-VALIDATION.md), [Workspace](docs/WORKSPACE-VALIDATION.md). The twenty synthetic rule fixtures are a regression set, not a real-world accuracy benchmark. Human comprehension and commercial demand remain unvalidated; [the observation sheet](docs/USER-VALIDATION.md) is a blank research plan.

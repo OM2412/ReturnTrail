@@ -39,6 +39,25 @@ public class AuthSecurityConfiguration {
         }
         return new InMemoryClientRegistrationRepository(registrations);
     }
+    static OAuth2AuthorizationRequestResolver authorizationRequestResolver(ClientRegistrationRepository clients) {
+        var resolver=new DefaultOAuth2AuthorizationRequestResolver(clients,"/oauth2/authorization");
+        resolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
+        return new OAuth2AuthorizationRequestResolver() {
+            private boolean enabled(String id) {
+                return id!=null && !id.isBlank() && clients.findByRegistrationId(id)!=null;
+            }
+            public org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest resolve(jakarta.servlet.http.HttpServletRequest request) {
+                String prefix=request.getContextPath()+"/oauth2/authorization/";
+                String path=request.getRequestURI();
+                if(!path.startsWith(prefix))return null;
+                String id=path.substring(prefix.length());
+                return enabled(id)?resolver.resolve(request):null;
+            }
+            public org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest resolve(jakarta.servlet.http.HttpServletRequest request,String id) {
+                return enabled(id)?resolver.resolve(request,id):null;
+            }
+        };
+    }
     @Bean
     SecurityFilterChain security(HttpSecurity http,ObjectProvider<ClientRegistrationRepository> registration,
                                  AccountLoginSuccess success) throws Exception {
@@ -56,17 +75,7 @@ public class AuthSecurityConfiguration {
                         .deleteCookies("RTSESSION").logoutSuccessHandler((req,res,auth)->res.setStatus(204)));
         ClientRegistrationRepository clients=registration.getIfAvailable();
         if(clients!=null) {
-            var resolver=new DefaultOAuth2AuthorizationRequestResolver(clients,"/oauth2/authorization");
-            resolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
-            OAuth2AuthorizationRequestResolver enabledResolver=new OAuth2AuthorizationRequestResolver() {
-                public org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest resolve(jakarta.servlet.http.HttpServletRequest request) {
-                    String id=request.getRequestURI().substring(request.getRequestURI().lastIndexOf('/')+1);
-                    return clients.findByRegistrationId(id)==null?null:resolver.resolve(request);
-                }
-                public org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest resolve(jakarta.servlet.http.HttpServletRequest request,String id) {
-                    return clients.findByRegistrationId(id)==null?null:resolver.resolve(request,id);
-                }
-            };
+            var enabledResolver=authorizationRequestResolver(clients);
             var factory=new org.springframework.http.client.SimpleClientHttpRequestFactory();
             factory.setConnectTimeout(10000);factory.setReadTimeout(20000);
             var userHttp=new org.springframework.web.client.RestTemplate(factory);

@@ -2,7 +2,7 @@
 
 **[Open the live guest preview](https://returntrail-api.onrender.com)** · [Project overview](../README.md) · [Current public validation](PUBLIC-VALIDATION.md)
 
-The current preview serves React and Spring from one Render origin with an external FalkorDB Cloud Free instance. It uses fictional guest workspaces; Google/GitHub sign-in is disabled.
+The current preview serves React and Spring from one Render origin with an external FalkorDB Cloud Free instance. It uses fictional workspaces. Guest entry and Google/GitHub provider registrations are configured; completed provider sign-in requires its separate acceptance check.
 
 ## Start here
 

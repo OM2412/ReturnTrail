@@ -7,7 +7,7 @@ uptime guarantee or a real-world accuracy benchmark. The application and UI are
 served from the same Render origin. This deployment uses an external FalkorDB
 Cloud Free instance; Vercel is not needed to access this current preview.
 
-## Public HTTP observations
+## Initial public HTTP observations
 
 - `GET /actuator/health/readiness`: HTTP 200, `{"status":"UP"}`.
 - `GET /`: HTTP 200, HTML containing the React root.
@@ -82,13 +82,36 @@ monitor targets the readiness endpoint. The supplied 18 October dashboard showed
 three UP monitors at five-minute intervals. Alert delivery was not independently
 tested. No monitor was created by the API/model acceptance tests above.
 
+## Later OAuth configuration check
+
+After the operator supplied production credentials and redeployed on 18 October:
+
+- `/api/auth/session` reports `googleConfigured=true` and `githubConfigured=true`.
+- Google authorization returns HTTP 302 to `accounts.google.com`, requesting
+  only `openid profile`, with callback
+  `https://returntrail-api.onrender.com/login/oauth2/code/google`.
+- GitHub authorization returns HTTP 302 to `github.com/login/oauth/authorize`,
+  requesting only `read:user`, with callback
+  `https://returntrail-api.onrender.com/login/oauth2/code/github`.
+- These checks do not submit a provider password or consent, exchange a real
+  authorization code, or establish successful sign-in/logout/re-login.
+
+Enabling providers exposed an unrelated-path resolver bug: `GET /` returned
+HTTP 500 because an empty path segment was used as a registration ID. The old
+resolver failure was reproduced locally; three regression tests pass for the
+route-scoped fix, including blank paths, disabled/unknown providers and
+state/PKCE/public callback preservation with a context path. Public deployment
+of this fix requires its own post-deploy homepage check.
+
 ## Hosting boundaries
 
 - Render Free can sleep after inactivity and can restart; in-memory sessions reset.
 - FalkorDB Free has no TLS, persistence or backups; database credentials travel
   without transport encryption on that tier. It can stop/delete inactive instances.
-- Keep this deployment guest-only and synthetic. Do not use it for real customer
-  records or claim durable saved accounts. Export a brief before leaving.
+- The operator later enabled provider sign-in for fictional account workspaces.
+  Do not use this deployment for real customer records or claim durable saved
+  accounts. Export a brief before leaving. Account identity bindings are stored
+  in the graph; OAuth does not add database transport encryption or persistence.
 - Google login and a YouTube demo video were not configured by these checks.
 - A passing readiness response checks the graph, not the model. The AI request
   above was a separate acceptance check.
