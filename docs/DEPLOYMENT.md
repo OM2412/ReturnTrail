@@ -2,6 +2,8 @@
 
 The production app image, real FalkorDB API behavior and database-volume retention across a database container restart were verified on a hosted Ubuntu amd64 runner on 17 October 2026. This is not a public deployment. Oracle account/VM provisioning, native ARM execution, Caddy/public TLS, real provider callbacks and target-host backup/restore still require acceptance checks.
 
+For a card-free temporary public preview from a laptop, use [PUBLIC-DEMO.md](PUBLIC-DEMO.md). That route runs a separate local Docker stack and requires the laptop to stay awake and online; it is not an always-on hosted deployment.
+
 ## Supported shape
 
 One Java backend serves the production frontend and API. FalkorDB stays on a private container network with a persistent volume; Caddy terminates HTTPS and compresses responses. Never expose an unauthenticated graph/database browser directly to the internet. Current sessions/lifecycle/budgets are local, so run **one backend replica**.
@@ -63,7 +65,7 @@ https://www.wemakedevs.org/hackathons/falkordb
 
 ## Free VM account setup
 
-Oracle Always Free is the selected free-only route, subject to signup verification and regional capacity. Create the account at https://signup.cloud.oracle.com/ and select the home region carefully: Always Free compute must be provisioned in that region, and the home region cannot be changed after signup. Do not upgrade to Pay As You Go or create resources outside the Always Free allowances for this route.
+Oracle Always Free is an optional VM route, subject to signup verification and regional capacity. Create the account at https://signup.cloud.oracle.com/ and select the home region carefully: Always Free compute must be provisioned in that region, and the home region cannot be changed after signup. Do not upgrade to Pay As You Go or create resources outside the Always Free allowances for this route.
 
 Oracle may require a mobile number and supported card for identity verification; a temporary authorization hold may appear. Enter verification details only on Oracle's site. Account/VM provisioning has not been performed by this project. After account activation, check the actual Always Free label, remaining account allowance and estimated charge before creating a VM. The selected image architecture, storage, ingress and final public hostname must then be verified on the target host.
 

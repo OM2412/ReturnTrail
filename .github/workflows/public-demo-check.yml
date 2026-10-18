@@ -1,0 +1,51 @@
+name: Public demo setup check
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - Start-PublicDemo.ps1
+      - compose.public-demo.yaml
+      - deploy/tests/PublicDemoScriptChecks.ps1
+      - .github/workflows/public-demo-check.yml
+      - Dockerfile
+  pull_request:
+    paths:
+      - Start-PublicDemo.ps1
+      - compose.public-demo.yaml
+      - deploy/tests/PublicDemoScriptChecks.ps1
+      - .github/workflows/public-demo-check.yml
+      - Dockerfile
+permissions:
+  contents: read
+jobs:
+  windows-script:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - name: Controlled checks on Windows PowerShell
+        shell: powershell
+        run: .\deploy\tests\PublicDemoScriptChecks.ps1
+  public-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Build and start an actual temporary HTTPS guest preview
+        shell: pwsh
+        run: ./Start-PublicDemo.ps1 -StatusPath "$env:RUNNER_TEMP/public-demo.json"
+      - name: Verify real API invariants through the public HTTPS URL
+        shell: bash
+        run: |
+          export API_URL="$(python3 -c 'import json,os; print(json.load(open(os.environ["RUNNER_TEMP"]+"/public-demo.json",encoding="utf-8-sig"))["publicUrl"])')"
+          node frontend/tests/evidence-api.mjs
+      - name: Diagnostics on failure
+        if: failure()
+        run: docker compose --project-name returntrail-public-demo -f compose.public-demo.yaml logs --no-color --tail 100
+      - name: Remove isolated CI preview and test data
+        if: always()
+        run: docker compose --project-name returntrail-public-demo -f compose.public-demo.yaml down --volumes --remove-orphans

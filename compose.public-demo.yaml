@@ -1,0 +1,42 @@
+# Temporary public preview. A separate project/volume keeps development data separate.
+services:
+  falkordb:
+    image: falkordb/falkordb@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a
+    environment:
+      REDIS_ARGS: --dir /data --appendonly yes
+    volumes:
+      - public_demo_graph:/data
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, redis-cli, PING]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  app:
+    image: returntrail-public-demo-app:local
+    build:
+      context: .
+      args:
+        # A Quick Tunnel hostname is temporary; do not publish it as an SEO origin.
+        PUBLIC_SITE_URL: ''
+    ports: ['127.0.0.1:18085:8085']
+    environment:
+      FALKORDB_HOST: falkordb
+      FALKORDB_PORT: '6379'
+      RETURNTRAIL_PUBLIC_URL: ${RETURNTRAIL_DEMO_ORIGIN:-https://not-yet-configured.invalid}
+      SESSION_COOKIE_SECURE: 'true'
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      # Guest preview avoids sending OAuth callbacks to a changing hostname.
+      GOOGLE_LOGIN_ENABLED: 'false'
+      GITHUB_LOGIN_ENABLED: 'false'
+    depends_on:
+      falkordb:
+        condition: service_healthy
+    restart: unless-stopped
+  tunnel:
+    image: cloudflare/cloudflared:2026.10.1
+    command: [tunnel, --no-autoupdate, --protocol, http2, --url, 'http://app:8085']
+    # A restart can allocate another public hostname. Relaunch through the script.
+    restart: 'no'
+volumes:
+  public_demo_graph:
