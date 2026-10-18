@@ -5,6 +5,8 @@ RUN npm ci
 COPY frontend/ ./
 ARG PUBLIC_SITE_URL
 ENV VITE_PUBLIC_URL=$PUBLIC_SITE_URL
+ARG DEMO_VIDEO_URL=https://youtu.be/5lfysyQZOO0
+ENV VITE_DEMO_VIDEO_URL=$DEMO_VIDEO_URL
 RUN npm run build
 
 FROM maven:3.9-eclipse-temurin-21 AS backend

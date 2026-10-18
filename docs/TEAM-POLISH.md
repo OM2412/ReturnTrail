@@ -27,11 +27,11 @@ Project source: https://github.com/OM2412/ReturnTrail
 
 Portraits are local assets; they are not hotlinked from LinkedIn. Photos reserve their layout space, load lazily and fall back to initials if a file fails. Public WebP files total roughly 156 KB. Original files and the exact image-edit prompt are preserved in `PHOTO-EDIT.md` and `team-originals`. The source screenshots are documentation assets, not files served by the public frontend build.
 
-## Add the real YouTube video later
+## Published YouTube demo — 18 October 2026
 
-The update intentionally ships without a video URL: no empty card, made-up video or dead CTA appears.
+The published walkthrough is https://youtu.be/5lfysyQZOO0. The production Docker build defaults `DEMO_VIDEO_URL` to this public link and passes it to Vite as `VITE_DEMO_VIDEO_URL`. The landing page, About page and shared footer expose the demo after that build is deployed. The thumbnail is a local image, so it does not contact YouTube before the user chooses to load the player.
 
-For a local development session, stop Vite, then run in that frontend terminal:
+To override the video for a local development session, stop Vite, then run:
 
 ```powershell
 Set-Location "$env:USERPROFILE\Projects\returntrail\frontend"
@@ -43,7 +43,7 @@ For persistence, put one `VITE_DEMO_VIDEO_URL=https://www.youtube.com/watch?v=YO
 
 Supported inputs are HTTPS YouTube watch, youtu.be share, shorts and embed links with a valid video ID. Other hosts, credentials, custom ports and non-HTTPS values are ignored. An absent/invalid URL hides the feature.
 
-The video is present on Landing/About with a local poster, an explicit load button and an external YouTube link. Only choosing Load creates the privacy-enhanced YouTube iframe; autoplay is not enabled. YouTube's own policies apply after loading. No actual uploaded video was supplied, so real playback, embed permission and final accessibility/captions remain an operator check.
+The video is present on Landing/About with a local poster, an explicit load button and an external YouTube link. Only choosing Load creates the privacy-enhanced YouTube iframe; autoplay is not enabled. YouTube's own policies apply after loading. The uploaded video is linked above. Real playback, embed permission and final accessibility/captions remain separate from mocked player tests.
 
 ## Suggested video sequence
 
