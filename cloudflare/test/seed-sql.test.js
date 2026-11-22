@@ -8,12 +8,15 @@ import { caseSnapshot } from "../src/snapshot.js";
 import { findingUuid, evidenceRevision } from "../src/findings.js";
 import worker from "../src/worker.js";
 import { createFollowups,saveClarification } from "../src/workflows.js";
+import { captureEvidence,payloadHash } from "../src/evidenceImport.js";
+import { contextView } from "../src/context.js";
 
 test("real SQLite enforces workspace-scoped seed relationships", async () => {
   const sqlite = new DatabaseSync(":memory:");
   try {
     sqlite.exec(readFileSync(new URL("../migrations/0001_core.sql", import.meta.url), "utf8"));
     sqlite.exec(readFileSync(new URL("../migrations/0002_workflow_parity.sql", import.meta.url), "utf8"));
+    sqlite.exec(readFileSync(new URL("../migrations/0003_evidence_import.sql", import.meta.url), "utf8"));
     const adapter = {
       prepare(sql) {
         const stmt = sqlite.prepare(sql);
@@ -112,10 +115,40 @@ test("real SQLite enforces workspace-scoped seed relationships", async () => {
     assert.equal(afterClarification.workflowVersion,2);
     assert.equal((await createFollowups(adapter,"guest-b","CASE-001")).value.count,1);
     assert.equal((await caseSnapshot(adapter,"guest-b","CASE-001")).assessment,"NEEDS_CLARIFICATION");
+    const capture = {pickupId:"PICKUP-002-A",sourceLabel:"Manual observation",
+      sourceType:"CUSTOMER_NOTE",originalText:"The customer cancelled pickup attempt A.",
+      quote:"customer cancelled",claimedStatus:"CUSTOMER_CANCELLED",synthetic:true,
+      expectedVersion:0,requestId:"abcdef12-1234-4123-8123-123456789abc"};
+    assert.match(await payloadHash(capture),/^[a-f0-9]{64}$/);
+    assert.equal((await captureEvidence(adapter,"guest-a","CASE-002",{...capture,quote:"unrelated"})).status,400);
+    assert.equal((await captureEvidence(adapter,"guest-a","CASE-002",{...capture,pickupId:"OTHER"})).status,409);
+    const receipt = await captureEvidence(adapter,"guest-a","CASE-002",capture);
+    assert.equal(receipt.status,200);
+    assert.equal(receipt.value.created,true);
+    assert.equal(receipt.value.currentVersion,1);
+    assert.equal((await caseSnapshot(adapter,"guest-a","CASE-002")).changes.latestEvidenceIds[0],
+      `DOC-${capture.requestId}`);
+    const replay = await captureEvidence(adapter,"guest-a","CASE-002",capture);
+    assert.equal(replay.status,200);
+    assert.equal(replay.value.created,false);
+    assert.equal(replay.value.currentVersion,1);
+    assert.equal((await captureEvidence(adapter,"guest-a","CASE-002",{...capture,originalText:"customer cancelled"})).status,409);
+    assert.equal((await captureEvidence(adapter,"guest-a","CASE-002",{...capture,
+      requestId:"abcdef12-1234-4123-8123-123456789abd"})).status,409);
+    assert.equal((await caseSnapshot(adapter,"guest-b","CASE-002")).evidenceVersion,0);
+    const context = await contextView(adapter,"guest-a","CASE-001","DOC-002");
+    assert.equal(context.status,200);
+    assert.equal(context.value.current.state,"SUPPORTED_DISAGREEMENT");
+    assert.equal(context.value.preview.assessment.state,"NO_SUPPORTED_FINDING");
+    assert.equal(context.value.preview.ruleOutcomeChanged,true);
+    assert.equal(context.value.preview.graph.evidence.length,1);
+    assert.equal((await caseSnapshot(adapter,"guest-a","CASE-001")).evidence.length,2);
+    assert.equal((await contextView(adapter,"guest-a","CASE-001","NOT-THERE")).status,404);
+    assert.equal((await contextView(adapter,"guest-c","CASE-001")).status,404);
     const count = (table, workspace) => sqlite.prepare(`SELECT COUNT(*) AS total FROM ${table} WHERE workspace_id = ?`).get(workspace).total;
     for (const workspace of ["guest-a", "guest-b"]) {
       assert.equal(count("cases", workspace), 4);
-      assert.equal(count("evidence", workspace), 7);
+      assert.equal(count("evidence", workspace), workspace==="guest-a" ? 8 : 7);
       assert.equal(count("case_actions", workspace), workspace==="guest-a" ? 2 : 2);
       assert.equal(count("clarifications", workspace), workspace==="guest-a" ? 2 : 1);
     }

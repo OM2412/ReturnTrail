@@ -27,9 +27,13 @@ data, but is not a drop-in graph driver replacement.
   CSRF checks, source-version guards, transaction-scoped workflow revisions,
   deterministic task keys and reply-idempotency. These paths are still
   **experimental** and need browser/concurrent-worker integration tests.
-- Evidence ingestion, AI investigation, context analysis and OAuth remain
-  unported and intentionally return `501`.
-- OAuth, Groq, source comparisons, idempotency, rate limits and per-account
+- Synthetic evidence import now validates literal source quotes, strict schema,
+  existing pickup ownership, the 30-record bound, expected evidence version,
+  SHA-256 idempotency hash and request ID. A third migration stores the hash.
+- Deterministic `/findings` and read-only `/context?exclude=...` endpoints are
+  ported, including source-set coverage and non-destructive counterfactuals.
+- AI investigation and OAuth remain unported and intentionally return `501`.
+- OAuth, Groq, rate limits and per-account
   authorization are **not yet ported**. Do not claim feature parity.
 
 ## Before any deployment

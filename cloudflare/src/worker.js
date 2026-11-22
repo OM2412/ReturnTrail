@@ -3,6 +3,8 @@ import { prepareSeed } from "./seed.js";
 import { listEvidence, proof } from "./caseRead.js";
 import { caseSnapshot } from "./snapshot.js";
 import { readActions,readClarifications,createFollowups,saveClarification } from "./workflows.js";
+import { captureEvidence } from "./evidenceImport.js";
+import { contextView } from "./context.js";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const COOKIE = "RTSESSION";
 
@@ -99,7 +101,34 @@ export default {
       const result = match[2] === "evidence"
         ? await listEvidence(env.DB, current.id, match[1])
         : await proof(env.DB, current.id, match[1]);
-      return result === null ? json({ error: "Case not found" }, 404) : json(result);
+      if (result === null) return json({ error:"Case not found" },404);
+      return match[2] === "evidence" ? json({caseId:match[1],synthetic:true,source:"D1",
+        count:result.length,evidence:result}) : json(result);
+    }
+    if (method === "POST" && match?.[2] === "evidence") {
+      const current = await session(env.DB,request);
+      if (!current) return json({error:"Guest workspace required"},401);
+      if (!(await checkMutation(request,env.DB))) return json({error:"Forbidden"},403);
+      if (Number(request.headers.get("content-length")) > 8192)
+        return json({error:"Request too large"},413);
+      let input;
+      try { input = await request.json(); } catch {return json({error:"Malformed JSON"},400);}
+      const result = await captureEvidence(env.DB,current.id,match[1],input);
+      return json(result.value,result.status);
+    }
+    const inspectMatch = pathname.match(/^\/api\/cases\/(CASE-[0-9]{3})\/(findings|context)$/);
+    if (method === "GET" && inspectMatch) {
+      const current = await session(env.DB,request);
+      if (!current) return json({error:"Guest workspace required"},401);
+      const caseId = inspectMatch[1];
+      if (inspectMatch[2] === "context") {
+        const result = await contextView(env.DB,current.id,caseId,new URL(request.url).searchParams.get("exclude")??"");
+        return json(result.value,result.status);
+      }
+      const snapshot = await caseSnapshot(env.DB,current.id,caseId);
+      return snapshot ? json({caseId,synthetic:true,method:"DETERMINISTIC_VALIDATION",
+        count:snapshot.findings.length,findings:snapshot.findings})
+        : json({error:"Case not found"},404);
     }
     const workspaceMatch = pathname.match(/^\/api\/cases\/(CASE-[0-9]{3})\/(snapshot|brief)$/);
     if (method === "GET" && workspaceMatch) {

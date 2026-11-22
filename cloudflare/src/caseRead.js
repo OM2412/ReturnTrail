@@ -30,8 +30,8 @@ export async function listEvidence(db, workspaceId, caseId) {
   return rows === null ? null : rows.map(rowToEvidence);
 }
 
-export async function proof(db, workspaceId, caseId) {
-  const rows = await loadCaseEvidence(db, workspaceId, caseId);
+export async function proof(db, workspaceId, caseId, excluded = "") {
+  const rows = await loadCaseEvidence(db, workspaceId, caseId, excluded);
   if (rows === null) return null;
   const nodes = new Map();
   const edges = new Map();
