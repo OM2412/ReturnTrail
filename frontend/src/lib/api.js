@@ -100,6 +100,11 @@ async function request(path, { timeout = 450000, ...options } = {}) {
 const root = (caseId = "CASE-001") =>
   `/api/cases/${encodeURIComponent(caseId)}`;
 export const api = {
+  // New Cloudflare account-scoped API. Never substitute guest case endpoints
+  // for account data; select a workspace only after server-backed membership.
+  accountSession: () => request('/api/account/session', { timeout: 15000 }),
+  accountCases: (workspaceId) => request(`/api/account/workspaces/${encodeURIComponent(workspaceId)}/cases`, { timeout: 45000 }),
+  accountSnapshot: (workspaceId,caseId) => request(`/api/account/workspaces/${encodeURIComponent(workspaceId)}/cases/${encodeURIComponent(caseId)}/snapshot`, { timeout: 45000 }),
   session: () => request("/api/auth/session", { timeout: 15000 }),
   logout: () => request("/api/auth/logout", { method: "POST", timeout: 15000 }),
   createSession: () =>

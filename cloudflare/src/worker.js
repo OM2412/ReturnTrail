@@ -7,6 +7,7 @@ import { captureEvidence } from "./evidenceImport.js";
 import { contextView } from "./context.js";
 import {handleOAuthRoute} from './oauthRoutes.js';
 import {handleAccountRoute} from './accountRoutes.js';
+import {handleAccountCaseRoute} from './accountCaseRoutes.js';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const COOKIE = "RTSESSION";
 
@@ -58,6 +59,8 @@ export default {
       if (result) return result;
     }
     if (env.AUTH_ENABLED === 'true' && pathname.startsWith('/api/account/')) {
+      const scoped=await handleAccountCaseRoute(request,env.DB);
+      if (scoped)return scoped;
       const result=await handleAccountRoute(request,env.DB);
       if (result) return result;
     }

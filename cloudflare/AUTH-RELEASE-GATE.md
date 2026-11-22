@@ -22,15 +22,18 @@ authentication. The original Java deployment and D1 guest preview are separate.
    subject and explicitly link it to the migrated D1 account. Do not use email
    equality to claim an account. Support Agent must be a distinct identity,
    created through a trusted administrator workflow.
-4. **Authorization:** currently `/api/cases` remains guest-only. Design and
-   implement server-authorized account case routing, workspace selection and
-   membership-based read/write permissions. Do not leak customer cases to agent
-   solely because the agent's persona is `SUPPORT_AGENT`.
-5. **Frontend compatibility:** the React `SignIn.jsx` uses legacy
+4. **Authorization:** `/api/cases` remains guest-only. A read-only
+   `/api/account/workspaces/{workspaceId}/cases` route and scoped snapshot
+   endpoint now enforce server-side membership, but account-owned case writes,
+   data migration and full account case API parity are still pending. Do not
+   leak customer cases to an agent solely because the agent's persona is
+   `SUPPORT_AGENT`.
+5. **Frontend compatibility:** the React API client now exposes account case
+   read methods, but `SignIn.jsx` still uses legacy
    `/oauth2/authorization/{google,github}` URLs, and `AuthContext` expects a
    specific `/api/auth/session` profile shape. The new Worker account routes
    are under `/api/account/*`. Implement and test an explicit contract adapter
-   alongside authenticated-case APIs before switching sign-in links.
+   and complete account-case parity before switching sign-in links.
 6. **Lifecycle:** implement account bootstrap/admin provisioning CLI or secured
    admin operation, account data migration, account-to-case ownership, workspace
    switching (if required), provider auth error UI, logout/UI refresh and
@@ -49,7 +52,7 @@ authentication. The original Java deployment and D1 guest preview are separate.
 
 ## Verified local coverage
 
-`node --test cloudflare/test/*.test.js` currently passes 23 tests. Local
+`node --test cloudflare/test/*.test.js` currently passes 24 tests. Local
 SQLite mocks and provider stub responses do not replace live provider tests.
 
 ## Privacy and identity rule
