@@ -1,6 +1,7 @@
 import {beginOAuth,consumeOAuth} from './oauthFlow.js';
 import {exchangeAuthorizationCode} from './oauthExchange.js';
 import {issueSessionForKnownIdentity,accountSessionCookie} from './verifiedSession.js';
+import {provisionVerifiedGoogleCustomer} from './accountProvisioning.js';
 
 const STATE_COOKIE='__Host-RTOAUTH';
 const cookieState=(request)=>request.headers.get('cookie')
@@ -10,8 +11,8 @@ const reply=(status,message,clear=false)=>new Response(JSON.stringify({error:mes
   status,headers:{'content-type':'application/json','cache-control':'no-store',
     ...(clear?{'set-cookie':clearState}:{})}});
 
-// The Worker must route here only when AUTH_ENABLED=true. It never creates new
-// identities; customer/agent identity linking is deliberately out of scope.
+// The Worker must route here only when AUTH_ENABLED=true. New customer signup
+// is opt-in for verified Google assertions only; no email-based linking.
 export async function handleOAuthRoute(request,env,{exchange=exchangeAuthorizationCode}={}) {
   const url=new URL(request.url);
   const match=url.pathname.match(/^\/api\/oauth\/(google|github)\/(start|callback)$/);
@@ -38,6 +39,9 @@ export async function handleOAuthRoute(request,env,{exchange=exchangeAuthorizati
     const transaction=await consumeOAuth(env.DB,{provider,state,cookieState:cookieState(request)});
     if (!transaction) return reply(403,'OAuth state is invalid or expired',true);
     const identity=await exchange({...config,provider,code,redirectUri:callback,...transaction});
+    if (identity?.provider!==provider)return reply(401,'OAuth provider mismatch',true);
+    if (provider==='GOOGLE' && env.GOOGLE_CUSTOMER_SIGNUP==='true')
+      await provisionVerifiedGoogleCustomer(env.DB,identity);
     const result=await issueSessionForKnownIdentity(env.DB,identity);
     if (!result) return reply(403,'Account not linked; contact administrator',true);
     const headers=new Headers({'location':'/','cache-control':'no-store'});
