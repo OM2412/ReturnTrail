@@ -63,6 +63,13 @@ export async function handleOAuthRoute(request,env,{exchange=exchangeAuthorizati
     console.warn('returntrail_oauth_callback_failure',{
       provider,stage,reason:knownReasons.has(error?.message)?error.message:'internal_error',
     });
+    if (env.OAUTH_DIAGNOSTICS==='true') {
+      // Staging-only: fixed enum details, never token/provider payloads.
+      return new Response(JSON.stringify({error:'OAuth verification failed',
+        diagnostic:{stage,reason:knownReasons.has(error?.message)?error.message:'internal_error'}}),{
+        status:401,headers:{'content-type':'application/json','cache-control':'no-store','set-cookie':clearState},
+      });
+    }
     return reply(401,'OAuth verification failed',true);
   }
 }
