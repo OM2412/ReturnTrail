@@ -4,7 +4,10 @@
   "compatibility_date": "2026-11-21",
   "vars": {
     "GOOGLE_CLIENT_ID": "334652903946-1ecpserb1b2cup673biim0a9pnuft1o0.apps.googleusercontent.com",
-    "GITHUB_CLIENT_ID": "Ov23liZU74Hx4JdU6rXH"
+    "GITHUB_CLIENT_ID": "Ov23liZU74Hx4JdU6rXH",
+    "AUTH_ENABLED": "true",
+    "ACCOUNT_FRONTEND_ENABLED": "true",
+    "GOOGLE_CUSTOMER_SIGNUP": "true"
   },
   "assets": {
     "directory": "../frontend/dist",
