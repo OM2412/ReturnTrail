@@ -2,18 +2,30 @@
 
 ## Current public preview
 
-**Live:** https://returntrail-api.onrender.com  
-**Readiness:** https://returntrail-api.onrender.com/actuator/health/readiness
+**Working guest preview (Cloudflare D1):** https://returntrail-preview-api.omjadon242-67c.workers.dev
+
+**Isolated OAuth staging (guest mode until release gates pass):** https://returntrail-auth-staging.omjadon242-67c.workers.dev
+**New Render deployment (graph unavailable):** https://returntrail.onrender.com
+
+The original `returntrail-api.onrender.com` service was suspended. A replacement
+Render Java service is marked Live, but its graph dependency fails with
+`UnknownHostException` for the expired FalkorDB host. The Render service's
+deployment status does not mean its database-dependent API is ready.
 
 | Component | Current deployment |
 | --- | --- |
-| Frontend and API | One Render Docker web service; the root `Dockerfile` embeds React into the Spring JAR. |
-| Graph | External FalkorDB Cloud Free; FalkorDB remains the primary database. |
-| Access | Fictional guest and account workspaces; Google/GitHub registrations configured. Real provider callback acceptance is checked separately. |
+| Frontend and API | Working Cloudflare Workers D1 guest port. Original Java combined image remains a separate, graph-dependent deployment. |
+| Data | Isolated Cloudflare D1 SQLite database for fictional cases; original Java graph workflows have only partial D1 parity. |
+| Access | Guest preview only. Staging Google/GitHub OAuth client secrets exist but account-mode flags remain off until verified account provisioning and isolation checks. |
 | Host dependency | Runs independently of a local laptop. |
-| Verification | [Public checks — 18 October 2026](PUBLIC-VALIDATION.md): five API workflow groups and one real four-tool AI investigation. |
+| Verification | Cloudflare staging `/api/health` returned `status=ok`, `database=ready`, `mode=guest-preview` on 22 November 2026; 25 local Worker tests and frontend build passed. Historical [Java/FalkorDB checks — 18 October 2026](PUBLIC-VALIDATION.md) are not claims about D1 parity. |
 
-Render Free can sleep after 15 minutes without incoming traffic; waking can take about a minute. Backend restarts invalidate in-memory sessions. FalkorDB Free has no TLS, persistence or backups and can stop/delete inactive instances. Database credentials travel without transport encryption on that tier. Use fictional records only and export the brief; this preview does not offer durable saved accounts.
+The original Render implementation still requires a functioning FalkorDB graph
+and must not be re-enabled against an expired hostname. Its Free instance can
+sleep; backend restarts invalidate in-memory sessions. Use fictional records in
+the D1 preview. Durable customer accounts, data exports, backups and disaster
+recovery are **not yet approved for production**. See
+[`cloudflare/AUTH-RELEASE-GATE.md`](../cloudflare/AUTH-RELEASE-GATE.md).
 
 ### Reproduce this hosting shape
 

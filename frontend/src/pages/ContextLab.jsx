@@ -79,6 +79,6 @@ export default function ContextLab() {
           <details><summary>Task reference</summary><code>{m.actionId}</code></details>
         </article>)}</div>}
     </section>}
-    <SourceNote>Fixed parameterized FalkorDB queries return the source paths. The supported rules assess the returned claims; no claim is independently verified.</SourceNote>
+    <SourceNote>This staging deployment reads source paths from its scoped Cloudflare D1 evidence relationships. The supported rules assess the returned claims; no claim is independently verified.</SourceNote>
   </>;
 }

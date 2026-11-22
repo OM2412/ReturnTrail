@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://returntrail-api.onrender.com">Open live demo</a> ·
+  <a href="https://returntrail-preview-api.omjadon242-67c.workers.dev">Open D1 guest preview</a> ·
   <a href="https://youtu.be/5lfysyQZOO0">Watch demo video</a> ·
   <a href="#try-the-demo">Demo walkthrough</a> ·
   <a href="#why-a-graph">Why a graph?</a> ·
@@ -45,10 +45,10 @@ For **CASE-001**, both records describe **PICKUP-001**. The app retains both cla
 **[Watch the complete demo on YouTube →](https://youtu.be/5lfysyQZOO0)** · 4 minutes 15 seconds  
 Compare original evidence, inspect graph connections, run the AI investigation, record a manual task outcome, and review what changes when a new source arrives.
 
-**[Open ReturnTrail →](https://returntrail-api.onrender.com)**  
-https://returntrail-api.onrender.com — choose **Explore as a guest**; no account or personal model key required.
+**[Open ReturnTrail D1 guest preview →](https://returntrail-preview-api.omjadon242-67c.workers.dev)**
+This Cloudflare preview uses a separate SQLite/D1 implementation with fictional practice cases. Choose **Explore as a guest**; no account or personal model key is required.
 
-> **Free preview:** Google/GitHub sign-in is configured; guest entry remains available. Render may need about a minute to wake after inactivity; backend restarts reset sessions. The free cloud database has no persistence or backups, so preview work can be lost. Use fictional data and export your brief. [Current hosting and limits](docs/DEPLOYMENT.md#current-public-preview).
+> **Deployment boundary (November 2026):** The original Render/FalkorDB backend is not a usable primary demo because its expired graph endpoint fails DNS resolution. The D1 preview is a **guest-only, partial compatibility port**; it is not the original Java graph engine or a production customer account service. Google/GitHub credentials are configured only on an isolated authentication staging Worker; account login remains disabled pending verified identity migration. Some historical graph/AI workflows may not have parity. Use fictional records only. [Current hosting and limits](docs/DEPLOYMENT.md#current-public-preview).
 
 ![Actual ReturnTrail practice workspace showing two sources, a pickup disagreement and a pending question](docs/assets/workspace.webp)
 
@@ -56,7 +56,7 @@ https://returntrail-api.onrender.com — choose **Explore as a guest**; no accou
 
 **A suggested 90-second walkthrough:**
 
-1. Open [ReturnTrail](https://returntrail-api.onrender.com) and choose **Explore as a guest**. Alternatively, [run locally](#run-locally) at `http://127.0.0.1:5174`.
+1. Open the [D1 guest preview](https://returntrail-preview-api.omjadon242-67c.workers.dev) and choose **Explore as a guest**. Alternatively, [run the original graph-backed app locally](#run-locally) at `http://127.0.0.1:5174`.
 2. Open **CASE-001**. Compare the original words in **Evidence**, then inspect their returned source paths in **Connections**.
 3. Open **Context lab** and set aside **DOC-001**. The supported rule outcome changes because only one recorded reason remains. The original evidence stays untouched.
 4. In **Investigation**, choose **Review rules & prepare question**. This prepares or reuses a source-linked local follow-up without a model call.
@@ -93,7 +93,7 @@ All records, dates and notes are fictional. CASE-004's seeded reply is an exampl
 
 ![Actual Context lab comparing the full evidence set with a read-only preview that sets aside DOC-001](docs/assets/context-lab.webp)
 
-Removing FalkorDB removes the evidence traversal, returned proof paths and saved source/task/reply context. The frontend has no replacement case data source. The decorative 3D parcel experience is separate from the query-derived graph proof.
+The original Java implementation uses FalkorDB for traversal and proof paths. A separate Cloudflare D1 port now supplies selected guest workflows using relational tables and deterministic rules, but does **not** yet reproduce every graph query, AI investigation or account workflow. The decorative 3D parcel experience is separate from either data source.
 
 <details>
 <summary><strong>Inspect the graph model</strong></summary>
