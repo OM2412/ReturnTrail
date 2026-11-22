@@ -19,15 +19,20 @@ data, but is not a drop-in graph driver replacement.
 - `/api/cases/{id}/evidence` and `/api/cases/{id}/proof` use session-scoped SQL;
   proof nodes/edges preserve the existing frontend format with a `D1_QUERY_PATHS`
   source label.
-- Remaining case workflows (including snapshots) intentionally respond `501`.
+- `/api/cases/{id}/snapshot` and `/brief` recreate the Java conflict detector,
+  canonical SHA-256 evidence revisions, Java-compatible UUIDv3 finding IDs,
+  pending-clarification policy and four seeded scenario assessments. A second
+  SQL migration adds read-model fields for seeded follow-up history.
+- Remaining write workflows intentionally respond `501` until concurrency,
+  idempotency, version checks and UI parity are verified.
 - OAuth, Groq, source comparisons, idempotency, rate limits and per-account
   authorization are **not yet ported**. Do not claim feature parity.
 
 ## Before any deployment
 
-1. Reproduce the remaining graph queries in `docs/GRAPH-QUERIES.cypher` as
-   parameterized SQL, including findings, context and task evidence revisions.
-3. Add cross-session isolation, optimistic versioning, idempotency, write
+1. Reproduce the remaining mutation graph queries in `docs/GRAPH-QUERIES.cypher` as
+   parameterized SQL, including context and task evidence revisions.
+2. Add cross-session isolation, optimistic versioning, idempotency, write
    budgets and evidence revision tests.
 4. Implement the required auth/case APIs with byte-compatible responses.
 5. Run frontend API-contract/browser tests against the Worker locally.

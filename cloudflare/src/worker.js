@@ -1,7 +1,7 @@
-// Initial migration slice: guest-session parity only. All case endpoints remain
-// deliberately unavailable until the Cypher-to-SQL parity tests are complete.
+// Experimental migration: read-only case parity; write workflows remain unavailable.
 import { prepareSeed } from "./seed.js";
 import { listEvidence, proof } from "./caseRead.js";
+import { caseSnapshot } from "./snapshot.js";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const COOKIE = "RTSESSION";
 
@@ -99,6 +99,24 @@ export default {
         ? await listEvidence(env.DB, current.id, match[1])
         : await proof(env.DB, current.id, match[1]);
       return result === null ? json({ error: "Case not found" }, 404) : json(result);
+    }
+    const workspaceMatch = pathname.match(/^\/api\/cases\/(CASE-[0-9]{3})\/(snapshot|brief)$/);
+    if (method === "GET" && workspaceMatch) {
+      const current = await session(env.DB, request);
+      if (!current) return json({ error: "Guest workspace required" }, 401);
+      try {
+        const snapshot = await caseSnapshot(env.DB,current.id,workspaceMatch[1]);
+        if (!snapshot) return json({ error: "Case not found" }, 404);
+        return json(workspaceMatch[2] === "snapshot" ? snapshot : {
+          schemaVersion: "returntrail.case-brief.v1", generatedAt: new Date().toISOString(),
+          verification: "Synthetic sources and manual notes. Not independently verified; no refund decision.",
+          snapshot,
+        });
+      } catch (error) {
+        if (error.message === "Case changed during snapshot")
+          return json({ error: "Case changed during read. Refresh and retry." }, 409);
+        throw error;
+      }
     }
     if (method === "DELETE" && pathname === "/api/guest-sessions") {
       if (!(await checkMutation(request, env.DB))) return json({ error: "Forbidden" }, 403);

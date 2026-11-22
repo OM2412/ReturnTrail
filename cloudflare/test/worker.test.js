@@ -39,9 +39,10 @@ class FakeDb {
     assert.match(sessionStatement.sql, /^INSERT INTO guest_sessions/);
     const workspace = sessionStatement.args[0];
     const cases = statements.slice(1, 5);
-    const evidence = statements.slice(5);
+    const evidence = statements.slice(5,12);
     assert.equal(cases.length, 4);
     assert.equal(evidence.length, 7);
+    assert.equal(statements.length,14);
     for (const entry of cases) assert.equal(entry.args[0], workspace);
     for (const entry of evidence) assert.equal(entry.args[0], workspace);
     this.cases.set(workspace, cases.map(c => c.args.slice(1, 6)));
@@ -114,6 +115,6 @@ test("CSRF pre-session token is required and guest data stays isolated", async (
 });
 
 test("unported endpoints fail explicitly instead of returning fake case data", async () => {
-  const result = await worker.fetch(req("/api/cases/CASE-001/snapshot"), { DB: new FakeDb() });
+  const result = await worker.fetch(req("/api/cases/CASE-001/followups"), { DB: new FakeDb() });
   assert.equal(result.status, 501);
 });

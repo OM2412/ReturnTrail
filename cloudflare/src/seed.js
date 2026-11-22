@@ -36,5 +36,21 @@ export function prepareSeed(db, workspaceId, now) {
         `RETURN-${suffix}`, statementId, pickupId, id, sourceType, statement, statement,
         claimedStatus, statement, now);
   });
-  return [...cases, ...evidence];
+  // CASE-004 is the intentionally resolved synthetic example in the Java seed.
+  const revision = "ed1fe2c8adc6dc84b2dd81874faa56a4a52890fff3055a940eceb91abba553bb";
+  const findingId = "4443b749-d75b-3221-b6a5-77b4133e1afe";
+  const actionId = `FOLLOWUP-${findingId}`;
+  const action = db.prepare(`INSERT INTO case_actions
+    (workspace_id,case_id,id,status,evidence_revision,created_at,finding_id,pickup_id,question,evidence_ids,created_at_iso)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?)`).bind(workspaceId, "CASE-004", actionId, "RESOLVED", revision,
+      now, findingId, "PICKUP-004",
+      "Please confirm why pickup PICKUP-004 failed and explain the conflicting recorded reasons.",
+      JSON.stringify(["DOC-006", "DOC-007"]), "2026-10-15T09:00:00Z");
+  const clarification = db.prepare(`INSERT INTO clarifications
+    (workspace_id,case_id,id,action_id,note,outcome,request_id,created_at,finding_id,source,recorded_at_iso)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?)`).bind(workspaceId,"CASE-004",`CLARIFICATION-${actionId}`,
+      actionId, "Seeded synthetic example: a manual reply reports that the courier was unavailable. Not independently verified.",
+      "EXPLANATION_PROVIDED", "seeded", now, findingId,
+      "SEEDED_SYNTHETIC_CLARIFICATION", "2026-10-15T09:15:00Z");
+  return [...cases, ...evidence, action, clarification];
 }
