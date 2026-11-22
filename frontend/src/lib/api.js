@@ -80,8 +80,11 @@ async function request(path, { timeout = 450000, ...options } = {}) {
     }
     if (
       path === "/api/auth/logout" ||
-      (path === "/api/guest-sessions" && options.method === "DELETE")
+      (path === "/api/guest-sessions" && ["POST", "DELETE"].includes(options.method))
     )
+      // A newly created guest session rotates CSRF from the pre-session cookie
+      // to the guest session's own token. Never reuse the bootstrap token for
+      // investigation, evidence import, task creation or manual replies.
       resetSessionCheck();
     return data;
   } catch (error) {
