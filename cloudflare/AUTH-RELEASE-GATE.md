@@ -22,10 +22,10 @@ authentication. The original Java deployment and D1 guest preview are separate.
    subject and explicitly link it to the migrated D1 account. Do not use email
    equality to claim an account. Support Agent must be a distinct identity,
    created through a trusted administrator workflow.
-4. **Authorization:** `/api/cases` remains guest-only. A read-only
-   `/api/account/workspaces/{workspaceId}/cases` route and scoped snapshot
-   endpoint now enforce server-side membership, but account-owned case writes,
-   data migration and full account case API parity are still pending. Do not
+4. **Authorization:** `/api/cases` remains guest-only. Account-scoped case
+   listing, snapshot, evidence reads and synthetic evidence import now enforce
+   server-side membership; writes require MEMBER role and CSRF. Other
+   account-owned case mutations, data migration and full parity remain pending. Do not
    leak customer cases to an agent solely because the agent's persona is
    `SUPPORT_AGENT`.
 5. **Frontend compatibility:** the React API client now exposes account case

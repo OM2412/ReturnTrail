@@ -42,5 +42,15 @@ test('customer cases are scoped to explicitly authorized account workspaces',asy
     const granted=await handleAccountCaseRoute(request(agentWorkspace),db);
     assert.equal(granted.status,200);
     assert.deepEqual((await granted.json()).cases.map(x=>x.title),['Agent case']);
+    const evidenceUrl=`${root}/${agentWorkspace}/cases/CASE-001/evidence`;
+    const writeHeaders={cookie:`__Host-RTACCOUNT=${token}`,origin:'https://api.example.test',
+      'x-csrf-token':'B'.repeat(43)};
+    assert.equal((await handleAccountCaseRoute(new Request(evidenceUrl,{method:'POST',headers:writeHeaders,
+      body:JSON.stringify({})}),db)).status,403,'viewer must not write');
+    const customerWrite=`${root}/${customerWorkspace}/cases/CASE-001/evidence`;
+    assert.equal((await handleAccountCaseRoute(new Request(customerWrite,{method:'POST',
+      headers:{cookie:`__Host-RTACCOUNT=${token}`,origin:'https://api.example.test'},body:'{}'}),db)).status,403,'csrf required');
+    assert.equal((await handleAccountCaseRoute(new Request(customerWrite,{method:'POST',
+      headers:writeHeaders,body:'{}'}),db)).status,400,'invalid evidence rejected');
   }finally{sqlite.close();}
 });

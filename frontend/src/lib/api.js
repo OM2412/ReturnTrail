@@ -34,7 +34,7 @@ async function request(path, { timeout = 450000, ...options } = {}) {
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
     const csrf =
-      options.method && !["GET", "HEAD", "OPTIONS"].includes(options.method)
+      options.method && !["GET", "HEAD", "OPTIONS"].includes(options.method) && !options.headers?.['X-CSRF-TOKEN']
         ? await csrfHeader()
         : {};
     const response = await fetch(path, {
@@ -103,8 +103,13 @@ export const api = {
   // New Cloudflare account-scoped API. Never substitute guest case endpoints
   // for account data; select a workspace only after server-backed membership.
   accountSession: () => request('/api/account/session', { timeout: 15000 }),
+  accountCsrf: () => request('/api/account/csrf', { timeout: 15000 }),
   accountCases: (workspaceId) => request(`/api/account/workspaces/${encodeURIComponent(workspaceId)}/cases`, { timeout: 45000 }),
   accountSnapshot: (workspaceId,caseId) => request(`/api/account/workspaces/${encodeURIComponent(workspaceId)}/cases/${encodeURIComponent(caseId)}/snapshot`, { timeout: 45000 }),
+  accountEvidence: (workspaceId,caseId) => request(`/api/account/workspaces/${encodeURIComponent(workspaceId)}/cases/${encodeURIComponent(caseId)}/evidence`, { timeout: 45000 }),
+  accountIngest: (workspaceId,caseId,body,csrfToken) => request(`/api/account/workspaces/${encodeURIComponent(workspaceId)}/cases/${encodeURIComponent(caseId)}/evidence`, {
+    method:'POST',body:JSON.stringify(body),timeout:45000,headers:{'X-CSRF-TOKEN':csrfToken},
+  }),
   session: () => request("/api/auth/session", { timeout: 15000 }),
   logout: () => request("/api/auth/logout", { method: "POST", timeout: 15000 }),
   createSession: () =>
