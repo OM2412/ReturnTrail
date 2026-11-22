@@ -1,5 +1,7 @@
 // Initial migration slice: guest-session parity only. All case endpoints remain
 // deliberately unavailable until the Cypher-to-SQL parity tests are complete.
+import { prepareSeed } from "./seed.js";
+import { listEvidence, proof } from "./caseRead.js";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const COOKIE = "RTSESSION";
 
@@ -63,7 +65,7 @@ export default {
       if (current) {
         if (request.headers.get("x-csrf-token") !== current.csrf_token)
           return json({ error: "CSRF validation failed" }, 403);
-        return json({ status: "PREPARING", caseId: null, synthetic: true, initializedNow: false }, 202);
+        return json({ status: "READY", caseId: "CASE-001", synthetic: true, initializedNow: false });
       }
       if (!preSessionCsrf(request) || request.headers.get("x-csrf-token") !== preSessionCsrf(request))
         return json({ error: "CSRF validation failed" }, 403);
@@ -71,11 +73,32 @@ export default {
       const csrf = crypto.randomUUID();
       const reference = crypto.randomUUID();
       const now = Date.now();
-      await env.DB.prepare("INSERT INTO guest_sessions (id, csrf_token, workspace_reference, created_at, expires_at) VALUES (?, ?, ?, ?, ?)")
-        .bind(id, csrf, reference, now, now + DAY_MS).run();
-      // Do not advertise READY before cases are seeded: existing UI expects graph data.
-      return json({ status: "PREPARING", caseId: null, synthetic: true, initializedNow: true }, 202,
+      // D1 batch executes within a transaction. Never issue a session cookie
+      // before all four cases and seven evidence rows have been committed.
+      await env.DB.batch([
+        env.DB.prepare("INSERT INTO guest_sessions (id, csrf_token, workspace_reference, created_at, expires_at) VALUES (?, ?, ?, ?, ?)")
+          .bind(id, csrf, reference, now, now + DAY_MS),
+        ...prepareSeed(env.DB, id, now),
+      ]);
+      return json({ status: "READY", caseId: "CASE-001", synthetic: true, initializedNow: true }, 200,
         { "set-cookie": `${COOKIE}=${id}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=86400` });
+    }
+    if (method === "GET" && pathname === "/api/cases") {
+      const current = await session(env.DB, request);
+      if (!current) return json({ error: "Guest workspace required" }, 401);
+      const { results } = await env.DB.prepare(`SELECT id AS caseId,title,scenario,description,lesson,
+        evidence_version AS evidenceVersion, workflow_version AS workflowVersion
+        FROM cases WHERE workspace_id = ? ORDER BY id`).bind(current.id).all();
+      return json({ synthetic: true, count: results.length, cases: results });
+    }
+    const match = pathname.match(/^\/api\/cases\/(CASE-[0-9]{3})\/(evidence|proof)$/);
+    if (method === "GET" && match) {
+      const current = await session(env.DB, request);
+      if (!current) return json({ error: "Guest workspace required" }, 401);
+      const result = match[2] === "evidence"
+        ? await listEvidence(env.DB, current.id, match[1])
+        : await proof(env.DB, current.id, match[1]);
+      return result === null ? json({ error: "Case not found" }, 404) : json(result);
     }
     if (method === "DELETE" && pathname === "/api/guest-sessions") {
       if (!(await checkMutation(request, env.DB))) return json({ error: "Forbidden" }, 403);

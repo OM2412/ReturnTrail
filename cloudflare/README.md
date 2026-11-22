@@ -13,17 +13,20 @@ data, but is not a drop-in graph driver replacement.
 
 - Relational schema for guest sessions, cases, evidence, graph relationships,
   actions and clarifications.
-- First guest session/CSRF endpoints. Guest creation intentionally responds
-  `202 PREPARING`, because workspace seeding is not implemented yet.
-- All remaining `/api/*` endpoints intentionally respond `501`.
+- Guest session/CSRF endpoints. Guest creation inserts four synthetic cases and
+  seven evidence records in a single D1 batch transaction before returning
+  READY; `/api/cases` lists only the current session's cases.
+- `/api/cases/{id}/evidence` and `/api/cases/{id}/proof` use session-scoped SQL;
+  proof nodes/edges preserve the existing frontend format with a `D1_QUERY_PATHS`
+  source label.
+- Remaining case workflows (including snapshots) intentionally respond `501`.
 - OAuth, Groq, source comparisons, idempotency, rate limits and per-account
   authorization are **not yet ported**. Do not claim feature parity.
 
 ## Before any deployment
 
-1. Implement seed-data creation for each guest session and make it atomic.
-2. Reproduce each graph query in `docs/GRAPH-QUERIES.cypher` as parameterized SQL,
-   including source provenance and graph path evidence.
+1. Reproduce the remaining graph queries in `docs/GRAPH-QUERIES.cypher` as
+   parameterized SQL, including findings, context and task evidence revisions.
 3. Add cross-session isolation, optimistic versioning, idempotency, write
    budgets and evidence revision tests.
 4. Implement the required auth/case APIs with byte-compatible responses.
