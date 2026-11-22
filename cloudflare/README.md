@@ -3,11 +3,19 @@
 This is **not** the current production app. It is a separate, un-deployed
 Worker/D1 migration foundation. Do not route the live frontend here yet.
 
-An isolated, empty Cloudflare D1 preview database named `returntrail-preview`
-has been created. `wrangler.preview.jsonc` targets it exclusively, under the
+An isolated Cloudflare D1 preview database named `returntrail-preview` has
+been created. `wrangler.preview.jsonc` targets it exclusively, under the
 preview Worker name `returntrail-preview-api`; neither the main config nor
-the live frontend has been changed. **Schema migrations and runtime tests
-have not yet been run against that cloud database.**
+the live frontend has been changed. **On November 22, 2026, all statements
+in migrations 0001, 0002 and 0003 were manually applied through the D1
+dashboard console.** The six application tables and index were verified via
+`sqlite_master`; all nine `ALTER TABLE` queries reported success. There is
+no test user data yet, and live Worker/runtime tests have not been run.
+
+**Important:** manual dashboard migrations do not automatically populate
+Wrangler's migration bookkeeping. Do **not** blindly re-apply `wrangler d1
+migrations apply --remote` to this preview database; reconcile the migration
+history first to avoid duplicate-column/table errors.
 
 ## Why
 
