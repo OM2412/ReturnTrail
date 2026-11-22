@@ -8,7 +8,7 @@
     "AUTH_ENABLED": "true",
     "ACCOUNT_FRONTEND_ENABLED": "true",
     "GOOGLE_CUSTOMER_SIGNUP": "true",
-    "OAUTH_DIAGNOSTICS": "true"
+    "OAUTH_DIAGNOSTICS": "false"
   },
   "assets": {
     "directory": "../frontend/dist",
@@ -37,9 +37,6 @@
       "enabled": false,
       "head_sampling_rate": 1,
       "persist": true
-    },
-    "issue_detection": {
-      "enabled": false
     }
   }
 }
