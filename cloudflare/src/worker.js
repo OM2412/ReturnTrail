@@ -11,7 +11,8 @@ const COOKIE = "RTSESSION";
 function json(value, status = 200, headers = {}) {
   return new Response(JSON.stringify(value), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...headers },
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store",
+      "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", ...headers },
   });
 }
 
@@ -49,6 +50,16 @@ export default {
     if (!env.DB) return json({ error: "D1 database is not configured" }, 503);
     const { pathname } = new URL(request.url);
     const method = request.method;
+    if (method === "GET" && pathname === "/api/health") {
+      try {
+        const result = await env.DB.prepare("SELECT 1 AS ok").first();
+        return result?.ok === 1
+          ? json({ status: "ok", database: "ready", mode: "guest-preview" })
+          : json({ status: "unavailable" }, 503);
+      } catch {
+        return json({ status: "unavailable" }, 503);
+      }
+    }
     if (method === "GET" && pathname === "/api/auth/session") {
       const current = await session(env.DB, request);
       return json({ authenticated: false, githubConfigured: false, googleConfigured: false,
