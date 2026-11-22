@@ -2,6 +2,10 @@
   "name": "returntrail-auth-staging",
   "main": "src/worker.js",
   "compatibility_date": "2026-11-21",
+  "vars": {
+    "GOOGLE_CLIENT_ID": "334652903946-1ecpserb1b2cup673biim0a9pnuft1o0.apps.googleusercontent.com",
+    "GITHUB_CLIENT_ID": "Ov23liZU74Hx4JdU6rXH"
+  },
   "assets": {
     "directory": "../frontend/dist",
     "binding": "ASSETS",
