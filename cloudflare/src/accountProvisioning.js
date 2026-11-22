@@ -1,5 +1,6 @@
 // Explicit trusted-admin customer provisioning only. Never call directly from
 // public signup, OAuth callback, or an unverified request body.
+import {prepareSeed} from './seed.js';
 const PROVIDERS=new Set(['GOOGLE','GITHUB']);
 
 export async function provisionCustomerAccountByAdmin(db,{provider,subject,workspaceName,now=Date.now()}) {
@@ -21,6 +22,9 @@ export async function provisionCustomerAccountByAdmin(db,{provider,subject,works
       .bind(workspaceId,workspaceName.trim(),now),
     db.prepare(`INSERT INTO workspace_memberships(workspace_id,account_id,role,created_at)
       VALUES(?,?,?,?)`).bind(workspaceId,accountId,'OWNER',now),
+    // Only fictional demo cases. A fresh account gets the same four known
+    // scenarios as the original Java demo, atomically with its workspace.
+    ...prepareSeed(db,workspaceId,now),
   ]);
-  return {created:true,accountId,workspaceId};
+  return {created:true,accountId,workspaceId,seededDemo:true};
 }

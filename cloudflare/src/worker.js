@@ -8,6 +8,7 @@ import { contextView } from "./context.js";
 import {handleOAuthRoute} from './oauthRoutes.js';
 import {handleAccountRoute} from './accountRoutes.js';
 import {handleAccountCaseRoute} from './accountCaseRoutes.js';
+import {resolveAccountSession,sha256Hex} from './accountFoundation.js';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const COOKIE = "RTSESSION";
 
@@ -28,7 +29,21 @@ function preSessionCsrf(request) {
   return request.headers.get("cookie")?.match(/(?:^|;\s*)RTCSRF=([a-f0-9-]{36})(?:;|$)/)?.[1] ?? null;
 }
 
-async function session(db, request) {
+async function session(db, request, accountEnabled=false) {
+  if (accountEnabled) {
+    const accountToken=request.headers.get('cookie')
+      ?.match(/(?:^|;\s*)__Host-RTACCOUNT=([A-Za-z0-9_-]{43})(?:;|$)/)?.[1];
+    const account=accountToken?await resolveAccountSession(db,accountToken):null;
+    if (account) {
+      const owner=await db.prepare(`SELECT w.id AS workspaceId,m.role FROM workspace_memberships m
+        JOIN account_workspaces w ON w.id=m.workspace_id
+        WHERE m.account_id=? AND m.status='ACTIVE' AND w.status='ACTIVE'
+        ORDER BY CASE m.role WHEN 'OWNER' THEN 0 ELSE 1 END,w.id LIMIT 1`)
+        .bind(account.accountId).first();
+      if (owner)return {id:owner.workspaceId,kind:'ACCOUNT',role:owner.role,
+        accountId:account.accountId,csrfHash:account.csrfHash,token:accountToken};
+    }
+  }
   const id = cookieValue(request);
   if (!id) return null;
   return db.prepare("SELECT id, csrf_token, workspace_reference FROM guest_sessions WHERE id = ? AND expires_at > ?")
@@ -40,11 +55,17 @@ function requireSameOrigin(request) {
   return origin && origin === new URL(request.url).origin;
 }
 
-async function checkMutation(request, db) {
+async function checkMutation(request, db, accountEnabled=false) {
   if (!requireSameOrigin(request)) return false;
-  const userSession = await session(db, request);
+  const userSession = await session(db, request, accountEnabled);
   // First session creation uses a pre-session anti-CSRF cookie, not a bypass.
   if (!userSession) return false;
+  if (userSession.kind==='ACCOUNT') {
+    if (!['OWNER','ADMIN','MEMBER'].includes(userSession.role))return false;
+    const csrf=request.headers.get('x-csrf-token');
+    return !!csrf && /^[A-Za-z0-9_-]{43}$/.test(csrf) &&
+      await sha256Hex(csrf)===userSession.csrfHash;
+  }
   return request.headers.get("x-csrf-token") === userSession.csrf_token;
 }
 
@@ -53,6 +74,7 @@ export default {
     if (!env.DB) return json({ error: "D1 database is not configured" }, 503);
     const { pathname } = new URL(request.url);
     const method = request.method;
+    const accountMode=env.AUTH_ENABLED==='true' && env.ACCOUNT_FRONTEND_ENABLED==='true';
     // Auth is an explicit rollout gate; missing flags/secrets preserve guest preview.
     if (env.AUTH_ENABLED === 'true' && pathname.startsWith('/api/oauth/')) {
       const result=await handleOAuthRoute(request,env);
@@ -75,13 +97,27 @@ export default {
       }
     }
     if (method === "GET" && pathname === "/api/auth/session") {
-      const current = await session(env.DB, request);
-      return json({ authenticated: false, githubConfigured: false, googleConfigured: false,
+      const current = await session(env.DB, request,accountMode);
+      if (current?.kind==='ACCOUNT') {
+        const identity=await env.DB.prepare(`SELECT provider,provider_subject AS subject,email
+          FROM account_identities WHERE account_id=? ORDER BY linked_at LIMIT 1`)
+          .bind(current.accountId).first();
+        return json({authenticated:true,githubConfigured:!!env.GITHUB_CLIENT_ID,
+          googleConfigured:!!env.GOOGLE_CLIENT_ID,workspaceMode:'ACCOUNT',
+          profile:{login:identity?.subject??current.accountId,displayName:identity?.email??'Customer',
+            provider:identity?.provider?.toLowerCase()??'unknown'},
+          workspaceReference:current.id,authFlow:'CLOUDFLARE'});
+      }
+      return json({ authenticated: false, githubConfigured:accountMode&&!!env.GITHUB_CLIENT_ID,
+        googleConfigured:accountMode&&!!env.GOOGLE_CLIENT_ID,
         workspaceMode: current ? "GUEST" : "NONE", profile: null,
-        workspaceReference: current?.workspace_reference ?? null });
+        workspaceReference: current?.workspace_reference ?? null,
+        authFlow:accountMode?'CLOUDFLARE':'LEGACY' });
     }
     if (method === "GET" && pathname === "/api/auth/csrf") {
-      const current = await session(env.DB, request);
+      const current = await session(env.DB, request,accountMode);
+      if (current?.kind==='ACCOUNT')return handleAccountRoute(new Request(new URL('/api/account/csrf',request.url),{
+        headers:request.headers}),env.DB);
       if (current) return json({ headerName: "X-CSRF-TOKEN", token: current.csrf_token });
       const token = crypto.randomUUID();
       return json({ headerName: "X-CSRF-TOKEN", token }, 200,
@@ -89,7 +125,8 @@ export default {
     }
     if (method === "POST" && pathname === "/api/guest-sessions") {
       if (!requireSameOrigin(request)) return json({ error: "Origin validation failed" }, 403);
-      const current = await session(env.DB, request);
+      const current = await session(env.DB, request,accountMode);
+      if (current?.kind==='ACCOUNT')return json({error:'Account workspace already active'},409);
       if (current) {
         if (request.headers.get("x-csrf-token") !== current.csrf_token)
           return json({ error: "CSRF validation failed" }, 403);
@@ -112,7 +149,7 @@ export default {
         { "set-cookie": `${COOKIE}=${id}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=86400` });
     }
     if (method === "GET" && pathname === "/api/cases") {
-      const current = await session(env.DB, request);
+      const current = await session(env.DB, request,accountMode);
       if (!current) return json({ error: "Guest workspace required" }, 401);
       const { results } = await env.DB.prepare(`SELECT id AS caseId,title,scenario,description,lesson,
         evidence_version AS evidenceVersion, workflow_version AS workflowVersion
@@ -121,7 +158,7 @@ export default {
     }
     const match = pathname.match(/^\/api\/cases\/(CASE-[0-9]{3})\/(evidence|proof)$/);
     if (method === "GET" && match) {
-      const current = await session(env.DB, request);
+      const current = await session(env.DB, request,accountMode);
       if (!current) return json({ error: "Guest workspace required" }, 401);
       const result = match[2] === "evidence"
         ? await listEvidence(env.DB, current.id, match[1])
@@ -131,9 +168,9 @@ export default {
         count:result.length,evidence:result}) : json(result);
     }
     if (method === "POST" && match?.[2] === "evidence") {
-      const current = await session(env.DB,request);
+      const current = await session(env.DB,request,accountMode);
       if (!current) return json({error:"Guest workspace required"},401);
-      if (!(await checkMutation(request,env.DB))) return json({error:"Forbidden"},403);
+      if (!(await checkMutation(request,env.DB,accountMode))) return json({error:"Forbidden"},403);
       if (Number(request.headers.get("content-length")) > 8192)
         return json({error:"Request too large"},413);
       let input;
@@ -143,7 +180,7 @@ export default {
     }
     const inspectMatch = pathname.match(/^\/api\/cases\/(CASE-[0-9]{3})\/(findings|context)$/);
     if (method === "GET" && inspectMatch) {
-      const current = await session(env.DB,request);
+      const current = await session(env.DB,request,accountMode);
       if (!current) return json({error:"Guest workspace required"},401);
       const caseId = inspectMatch[1];
       if (inspectMatch[2] === "context") {
@@ -157,7 +194,7 @@ export default {
     }
     const workspaceMatch = pathname.match(/^\/api\/cases\/(CASE-[0-9]{3})\/(snapshot|brief)$/);
     if (method === "GET" && workspaceMatch) {
-      const current = await session(env.DB, request);
+      const current = await session(env.DB, request,accountMode);
       if (!current) return json({ error: "Guest workspace required" }, 401);
       try {
         const snapshot = await caseSnapshot(env.DB,current.id,workspaceMatch[1]);
@@ -175,7 +212,7 @@ export default {
     }
     const actionsMatch = pathname.match(/^\/api\/cases\/(CASE-[0-9]{3})\/(actions|clarifications|actions\/clarification)$/);
     if (actionsMatch && ["GET","POST"].includes(method)) {
-      const current = await session(env.DB,request);
+      const current = await session(env.DB,request,accountMode);
       if (!current) return json({ error:"Guest workspace required" },401);
       const caseId = actionsMatch[1];
       const kind = actionsMatch[2];
@@ -185,7 +222,7 @@ export default {
         return value ? json(value) : json({error:"Case not found"},404);
       }
       if (method === "POST" && kind !== "clarifications") {
-        if (!(await checkMutation(request,env.DB))) return json({error:"Forbidden"},403);
+        if (!(await checkMutation(request,env.DB,accountMode))) return json({error:"Forbidden"},403);
         if (kind === "actions") {
           const result = await createFollowups(env.DB,current.id,caseId);
           return json(result.value,result.status);
@@ -200,7 +237,12 @@ export default {
     }
     if ((method === "DELETE" && pathname === "/api/guest-sessions") ||
         (method === "POST" && pathname === "/api/auth/logout")) {
-      if (!(await checkMutation(request, env.DB))) return json({ error: "Forbidden" }, 403);
+      if (accountMode && pathname==='/api/auth/logout') {
+        const account=await session(env.DB,request,true);
+        if (account?.kind==='ACCOUNT')return handleAccountRoute(new Request(new URL('/api/account/logout',request.url),{
+          method:'POST',headers:request.headers}),env.DB);
+      }
+      if (!(await checkMutation(request, env.DB,accountMode))) return json({ error: "Forbidden" }, 403);
       await env.DB.prepare("DELETE FROM guest_sessions WHERE id = ?").bind(cookieValue(request)).run();
       return new Response(null, { status: 204,
         headers: { "set-cookie": `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`, "cache-control": "no-store" } });

@@ -143,7 +143,8 @@ export default function SignIn() {
                 <div className="signin-divider"><span />or save your demo workspace<span /></div>
                 <a
                   className={`signin-github signin-google ${loading || !session.googleConfigured || error ? "unavailable" : ""}`}
-                  href={loading || !session.googleConfigured || error ? undefined : "/oauth2/authorization/google"}
+                  href={loading || !session.googleConfigured || error ? undefined :
+                    session.authFlow === 'CLOUDFLARE' ? '/api/oauth/google/start' : '/oauth2/authorization/google'}
                   aria-disabled={loading || !session.googleConfigured || !!error}
                   role="link"
                 >
@@ -156,7 +157,7 @@ export default function SignIn() {
                   href={
                     loading || !session.githubConfigured || error
                       ? undefined
-                      : "/oauth2/authorization/github"
+                      : session.authFlow === 'CLOUDFLARE' ? '/api/oauth/github/start' : '/oauth2/authorization/github'
                   }
                   aria-disabled={
                     loading || !session.githubConfigured || !!error

@@ -7,7 +7,7 @@ import {provisionCustomerAccountByAdmin} from '../src/accountProvisioning.js';
 function fixture() {
   const sqlite=new DatabaseSync(':memory:');
   sqlite.exec('PRAGMA foreign_keys=ON');
-  for(const file of ['0004_account_foundation.sql'])
+  for(const file of ['0001_core.sql','0002_workflow_parity.sql','0003_evidence_import.sql','0004_account_foundation.sql'])
     sqlite.exec(readFileSync(new URL(`../migrations/${file}`,import.meta.url),'utf8'));
   const prepare=(sql)=>({bind(...args){return {
     sql,args,first:async()=>sqlite.prepare(sql).get(...args)??null,
@@ -31,8 +31,13 @@ test('admin provisioning creates isolated customer workspaces and preserves iden
     assert.deepEqual(same,{created:false,accountId:customer.accountId});
     assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM accounts').get().n,2);
     assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM workspace_memberships').get().n,2);
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM cases').get().n,8);
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM evidence').get().n,14);
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM case_actions').get().n,2);
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM clarifications').get().n,2);
     assert.equal(sqlite.prepare('SELECT role FROM workspace_memberships WHERE account_id=? AND workspace_id=?').get(otherCustomer.accountId,otherCustomer.workspaceId).role,'OWNER');
     assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM workspace_memberships WHERE account_id=? AND workspace_id=?').get(otherCustomer.accountId,customer.workspaceId).n,0);
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM cases WHERE workspace_id=?').get(customer.workspaceId).n,4);
   }finally{sqlite.close();}
 });
 

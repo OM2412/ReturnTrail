@@ -9,8 +9,9 @@ authentication. The original Java deployment and D1 guest preview are separate.
 
 ## Blockers before rollout
 
-1. **Database safety:** confirm whether the old customer profile/data is in
-   Java/FalkorDB and export it with backups. D1 migrations 0004 and 0005
+1. **Database safety:** the user confirmed that the expired FalkorDB free
+   instance held synthetic demo cases only, not real customer records. Keep
+   original identity ownership separate and retain backups where available. D1 migrations 0004 and 0005
    have not been applied remotely. The unused persona migration 0006 was removed.
    Prior 0001–0003 were applied manually, so reconcile Wrangler migration
    bookkeeping before any apply.
@@ -23,17 +24,20 @@ authentication. The original Java deployment and D1 guest preview are separate.
    subject and explicitly link it to the migrated D1 account. Do not use email
    equality to claim an account. ReturnTrail currently has customer accounts,
    not a Support Agent product persona (which belongs to OnceTold).
-4. **Authorization:** `/api/cases` remains guest-only. Account-scoped case
+4. **Authorization:** `/api/cases` remains guest-only unless both
+   `AUTH_ENABLED` and `ACCOUNT_FRONTEND_ENABLED` are explicitly `true`.
+   In account mode, the frontend session, CSRF, case listing and snapshot
+   routes use account sessions. Account-scoped case
    listing, snapshot, evidence reads and synthetic evidence import now enforce
    server-side membership; writes require MEMBER role and CSRF. Other
    account-owned case mutations, data migration and full parity remain pending.
    Workspace authorization is based on explicit membership, not an app persona.
-5. **Frontend compatibility:** the React API client now exposes account case
-   read methods, but `SignIn.jsx` still uses legacy
-   `/oauth2/authorization/{google,github}` URLs, and `AuthContext` expects a
-   specific `/api/auth/session` profile shape. The new Worker account routes
-   are under `/api/account/*`. Implement and test an explicit contract adapter
-   and complete account-case parity before switching sign-in links.
+5. **Frontend compatibility:** the React API client exposes account case
+   reads. `SignIn.jsx` uses Worker OAuth start URLs when its session contract
+   declares `authFlow: 'CLOUDFLARE'`; otherwise it retains legacy Java URLs.
+   A Worker adapter now returns the frontend's expected auth session shape.
+   The adapter is locally integration-tested, but full browser validation and
+   account-case mutation parity are pending.
 6. **Lifecycle:** implement account bootstrap/admin provisioning CLI or secured
    admin operation, account data migration, account-to-case ownership, workspace
    switching (if required), provider auth error UI, logout/UI refresh and
@@ -52,7 +56,7 @@ authentication. The original Java deployment and D1 guest preview are separate.
 
 ## Verified local coverage
 
-`node --test cloudflare/test/*.test.js` currently passes 24 tests. Local
+`node --test cloudflare/test/*.test.js` currently passes 25 tests. Local
 SQLite mocks and provider stub responses do not replace live provider tests.
 
 ## Privacy and identity rule
