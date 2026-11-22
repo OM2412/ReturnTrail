@@ -11,6 +11,7 @@ test('GitHub code exchange validates identity at GitHub and does not return acce
     urls.push(url);
     if (urls.length===1) {
       assert.equal(options.method,'POST');
+      assert.equal(options.redirect,'manual');
       const params=new URLSearchParams(options.body);
       assert.equal(params.get('code_verifier'),base.pkceVerifier);
       assert.equal(params.get('client_secret'),'test-secret');
@@ -28,6 +29,7 @@ test('provider failures and untrusted callback parameters fail closed',async()=>
   await assert.rejects(()=>exchangeAuthorizationCode({...base,code:'bad code'}),/Invalid OAuth/);
   await assert.rejects(()=>exchangeAuthorizationCode({...base,redirectUri:'http://example.test'}),/Invalid OAuth/);
   await assert.rejects(()=>exchangeAuthorizationCode({...base,fetcher:async()=>({ok:false})}),/exchange failed/);
+  await assert.rejects(()=>exchangeAuthorizationCode({...base,fetcher:async()=>({ok:false,status:302})}),/exchange failed/);
   await assert.rejects(()=>exchangeAuthorizationCode({...base,fetcher:async()=>({ok:true,json:async()=>({error:'bad_verification_code'})})}),/rejected/);
   await assert.rejects(()=>exchangeAuthorizationCode({...base,fetcher:async()=>({ok:true,json:async()=>({})})}),/Missing GitHub/);
 });
