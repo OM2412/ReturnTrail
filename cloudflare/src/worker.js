@@ -5,6 +5,7 @@ import { caseSnapshot } from "./snapshot.js";
 import { readActions,readClarifications,createFollowups,saveClarification } from "./workflows.js";
 import { captureEvidence } from "./evidenceImport.js";
 import { contextView } from "./context.js";
+import {handleOAuthRoute} from './oauthRoutes.js';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const COOKIE = "RTSESSION";
 
@@ -50,6 +51,11 @@ export default {
     if (!env.DB) return json({ error: "D1 database is not configured" }, 503);
     const { pathname } = new URL(request.url);
     const method = request.method;
+    // Auth is an explicit rollout gate; missing flags/secrets preserve guest preview.
+    if (env.AUTH_ENABLED === 'true' && pathname.startsWith('/api/oauth/')) {
+      const result=await handleOAuthRoute(request,env);
+      if (result) return result;
+    }
     if (method === "GET" && pathname === "/api/health") {
       try {
         const result = await env.DB.prepare("SELECT 1 AS ok").first();
