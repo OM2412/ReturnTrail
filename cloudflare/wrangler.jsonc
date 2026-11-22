@@ -1,0 +1,13 @@
+{
+  "name": "returntrail-api",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-21",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "returntrail",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
