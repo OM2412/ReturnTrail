@@ -27,6 +27,19 @@ authentication. The original Java deployment and D1 guest preview are separate.
   ownership, browser login, tenant isolation and rollback checks are complete.
 - Local `node --test cloudflare/test/*.test.js`: 25/25 passed.
 
+### Optional verified Google customer onboarding (feature branch only)
+
+`GOOGLE_CUSTOMER_SIGNUP=true` permits a first-time, server-verified Google
+OAuth subject to receive a **new isolated D1 workspace containing fictional
+practice records**. This flag is OFF by default and must remain OFF on public
+deployments until a staging browser signup, logout, tenant-isolation, and
+repeat-login review passes. Google email equality is never used to attach an
+old account. This does not recover expired FalkorDB graphs or migrate legacy
+account data. Never call it an existing-account migration.
+
+New local coverage: 27/27 Worker tests pass, including opt-in signup, replay
+rejection, default-off behavior, and Google/GitHub provider-mismatch rejection.
+
 ## Blockers before rollout
 
 1. **Database safety:** the user confirmed that the expired FalkorDB free
@@ -76,7 +89,7 @@ authentication. The original Java deployment and D1 guest preview are separate.
 
 ## Verified local coverage
 
-`node --test cloudflare/test/*.test.js` currently passes 25 tests. Local
+`node --test cloudflare/test/*.test.js` currently passes 27 tests. Local
 SQLite mocks and provider stub responses do not replace live provider tests.
 
 ## Privacy and identity rule
