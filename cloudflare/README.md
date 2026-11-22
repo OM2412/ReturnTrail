@@ -1,7 +1,10 @@
 # ReturnTrail Cloudflare migration (experimental)
 
-This is **not** the current production app. It is a separate, un-deployed
-Worker/D1 migration foundation. Do not route the live frontend here yet.
+This is **not** the current production app. The D1 Worker is deployed only at
+`https://returntrail-preview-api.omjadon242-67c.workers.dev`.
+The experimental React SPA is configured to be served as static assets on that
+same Worker origin; it must be built before deployment. Do not replace the live
+recruiter-facing website until browser regression testing and feature parity are complete.
 
 An isolated Cloudflare D1 preview database named `returntrail-preview` has
 been created. `wrangler.preview.jsonc` targets it exclusively, under the
@@ -9,13 +12,28 @@ preview Worker name `returntrail-preview-api`; neither the main config nor
 the live frontend has been changed. **On November 22, 2026, all statements
 in migrations 0001, 0002 and 0003 were manually applied through the D1
 dashboard console.** The six application tables and index were verified via
-`sqlite_master`; all nine `ALTER TABLE` queries reported success. There is
-no test user data yet, and live Worker/runtime tests have not been run.
+`sqlite_master`; all nine `ALTER TABLE` queries reported success. A synthetic guest session was created on the live preview Worker and four
+case records were successfully fetched from D1.
 
 **Important:** manual dashboard migrations do not automatically populate
 Wrangler's migration bookkeeping. Do **not** blindly re-apply `wrangler d1
 migrations apply --remote` to this preview database; reconcile the migration
 history first to avoid duplicate-column/table errors.
+
+## Preview build and deployment
+
+The dedicated Cloudflare Worker build uses the feature branch
+`feat/cloudflare-d1-migration-foundation` and runs:
+
+```sh
+git fetch origin feat/cloudflare-d1-migration-foundation && git checkout feat/cloudflare-d1-migration-foundation && npm ci --prefix frontend --no-audit --no-fund && npm run build --prefix frontend
+cd cloudflare && npx wrangler deploy --config wrangler.preview.jsonc
+```
+
+`assets.not_found_handling` serves the React SPA; `/api/*` routes execute the
+Worker first, so HttpOnly CSRF/session cookies work on the same origin.
+The deployed preview remains guest-only: OAuth, AI investigation, and any
+unported endpoints explicitly return 501. Do not advertise full parity.
 
 ## Why
 
