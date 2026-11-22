@@ -40,7 +40,7 @@ export async function verifyGithubAccessToken(accessToken, { fetcher = fetch } =
   // Authenticate against GitHub itself. Never accept a browser-supplied login or email.
   const response=await fetcher('https://api.github.com/user',{
     method:'GET',headers:{ Authorization:`Bearer ${accessToken}`,Accept:'application/vnd.github+json',
-      'X-GitHub-Api-Version':'2022-11-28' },redirect:'error',signal:AbortSignal.timeout(10000),
+      'X-GitHub-Api-Version':'2022-11-28' },redirect:'manual',signal:AbortSignal.timeout(10000),
   });
   if (!response.ok) throw new Error('GitHub token validation failed');
   const user=await response.json();
