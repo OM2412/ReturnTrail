@@ -1,4 +1,4 @@
-// Experimental migration: read-only case parity; write workflows remain unavailable.
+// Experimental guest-only migration; account OAuth and AI investigation are not ported.
 import { prepareSeed } from "./seed.js";
 import { listEvidence, proof } from "./caseRead.js";
 import { caseSnapshot } from "./snapshot.js";
@@ -173,7 +173,8 @@ export default {
         return json(result.value,result.status);
       }
     }
-    if (method === "DELETE" && pathname === "/api/guest-sessions") {
+    if ((method === "DELETE" && pathname === "/api/guest-sessions") ||
+        (method === "POST" && pathname === "/api/auth/logout")) {
       if (!(await checkMutation(request, env.DB))) return json({ error: "Forbidden" }, 403);
       await env.DB.prepare("DELETE FROM guest_sessions WHERE id = ?").bind(cookieValue(request)).run();
       return new Response(null, { status: 204,
