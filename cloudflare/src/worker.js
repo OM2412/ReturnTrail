@@ -6,6 +6,7 @@ import { readActions,readClarifications,createFollowups,saveClarification } from
 import { captureEvidence } from "./evidenceImport.js";
 import { contextView } from "./context.js";
 import {handleOAuthRoute} from './oauthRoutes.js';
+import {handleAccountRoute} from './accountRoutes.js';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const COOKIE = "RTSESSION";
 
@@ -54,6 +55,10 @@ export default {
     // Auth is an explicit rollout gate; missing flags/secrets preserve guest preview.
     if (env.AUTH_ENABLED === 'true' && pathname.startsWith('/api/oauth/')) {
       const result=await handleOAuthRoute(request,env);
+      if (result) return result;
+    }
+    if (env.AUTH_ENABLED === 'true' && pathname.startsWith('/api/account/')) {
+      const result=await handleAccountRoute(request,env.DB);
       if (result) return result;
     }
     if (method === "GET" && pathname === "/api/health") {
