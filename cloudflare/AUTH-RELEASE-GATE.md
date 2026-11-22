@@ -7,19 +7,37 @@ handshakes, callback routes, revocable sessions, CSRF logout, and explicit
 customer provisioning primitives. This is not full application
 authentication. The original Java deployment and D1 guest preview are separate.
 
+## Verified staging checkpoint — 22 November 2026
+
+- Isolated Worker `returntrail-auth-staging` is deployed at
+  `https://returntrail-auth-staging.omjadon242-67c.workers.dev`.
+- Isolated D1 database `returntrail-auth-staging` has migrations 0001–0005
+  applied. The original preview Worker and database are separate.
+- Separate **ReturnTrail Staging** OAuth clients exist on Google and GitHub,
+  with provider callbacks pointing to this staging Worker. Neither legacy
+  `ReturnTrail Local` client was changed.
+- Four runtime variables are present on the staging Worker. Both client-secret
+  values are configured as encrypted Cloudflare secrets. Never copy values
+  into repository files or diagnostics.
+- Live `/api/health` responded with `status=ok`, `database=ready`, and
+  `mode=guest-preview`. This is an infrastructure smoke test, **not** evidence
+  of successful OAuth sign-in.
+- `AUTH_ENABLED` and `ACCOUNT_FRONTEND_ENABLED` have **not** been enabled.
+  The staging site continues to serve guest mode until verified account
+  ownership, browser login, tenant isolation and rollback checks are complete.
+- Local `node --test cloudflare/test/*.test.js`: 25/25 passed.
+
 ## Blockers before rollout
 
 1. **Database safety:** the user confirmed that the expired FalkorDB free
    instance held synthetic demo cases only, not real customer records. Keep
-   original identity ownership separate and retain backups where available. D1 migrations 0004 and 0005
-   have not been applied remotely. The unused persona migration 0006 was removed.
-   Prior 0001–0003 were applied manually, so reconcile Wrangler migration
-   bookkeeping before any apply.
-2. **Provider configuration:** register two HTTPS callback URLs, one for Google
-   and one for GitHub: `https://<preview-host>/api/oauth/google/callback`
-   and `https://<preview-host>/api/oauth/github/callback`.
-   Store `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`,
-   `GITHUB_CLIENT_SECRET` as Worker environment secrets, never in Git/chat.
+   original identity ownership separate and retain backups where available.
+   Migrations 0004 and 0005 are applied **only in isolated staging**. The
+   unused persona migration 0006 was removed. Reconcile migration bookkeeping
+   independently on every other target before applying migrations there.
+2. **Provider configuration:** staging callback URLs and credentials are
+   configured. Confirm consent-screen test-user eligibility, correct provider
+   scope, and real browser sign-in. Keep the four OAuth secrets out of Git/chat.
 3. **Identity migration:** verify original customer provider + stable provider
    subject and explicitly link it to the migrated D1 account. Do not use email
    equality to claim an account. ReturnTrail currently has customer accounts,
@@ -50,9 +68,11 @@ authentication. The original Java deployment and D1 guest preview are separate.
    explicit membership, verify guest isolation, logout and persisted data.
 9. **Operations:** backups, retention, migration rollback plan, rate limiting,
    logs without OAuth tokens/PII, incident response and quota monitoring.
-10. **Deploy:** only after sign-off, deploy to an isolated staging Worker with
-    `AUTH_ENABLED=true`. Promote to production after rollback rehearsal and
-    measured end-to-end validation.
+10. **Deploy:** isolated staging is already live in guest mode. Enable
+    `AUTH_ENABLED=true` on staging only after identity verification and initial
+    provisioning have a tested recovery path. Enable
+    `ACCOUNT_FRONTEND_ENABLED=true` after account UX and tenant tests; promote
+    to production only after rollback rehearsal and measured validation.
 
 ## Verified local coverage
 
