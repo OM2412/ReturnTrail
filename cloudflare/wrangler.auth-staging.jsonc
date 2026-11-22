@@ -1,0 +1,19 @@
+{
+  "name": "returntrail-auth-staging",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-21",
+  "assets": {
+    "directory": "../frontend/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "returntrail-auth-staging",
+      "database_id": "cac6f0ae-732e-42b4-b624-6dc3c9217b22",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
