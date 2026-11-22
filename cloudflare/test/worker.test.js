@@ -118,3 +118,30 @@ test("unported endpoints fail explicitly instead of returning fake case data", a
   const result = await worker.fetch(req("/api/cases/CASE-001/followups"), { DB: new FakeDb() });
   assert.equal(result.status, 501);
 });
+
+
+test("logout requires same-origin CSRF and revokes the guest cookie", async () => {
+  const env = { DB: new FakeDb() };
+  const initial = await worker.fetch(req("/api/auth/csrf"), env);
+  const { token } = await initial.json();
+  const csrfCookie = initial.headers.get("set-cookie").split(";")[0];
+  const created = await worker.fetch(req("/api/guest-sessions", {
+    method: "POST", headers: { origin: "https://example.com", cookie: csrfCookie, "x-csrf-token": token },
+  }), env);
+  const sessionCookie = created.headers.get("set-cookie").split(";")[0];
+  const blocked = await worker.fetch(req("/api/auth/logout", {
+    method: "POST", headers: { cookie: sessionCookie, origin: "https://evil.example" },
+  }), env);
+  assert.equal(blocked.status, 403);
+  assert.equal(env.DB.sessions.size, 1);
+  const active = await worker.fetch(req("/api/auth/csrf", { headers: { cookie: sessionCookie } }), env);
+  const { token: activeToken } = await active.json();
+  const result = await worker.fetch(req("/api/auth/logout", {
+    method: "POST", headers: {
+      origin: "https://example.com", cookie: sessionCookie, "x-csrf-token": activeToken,
+    },
+  }), env);
+  assert.equal(result.status, 204);
+  assert.match(result.headers.get("set-cookie"), /RTSESSION=;.*Max-Age=0/);
+  assert.equal(env.DB.sessions.size, 0);
+});
