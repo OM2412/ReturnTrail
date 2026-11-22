@@ -19,7 +19,7 @@ export async function exchangeAuthorizationCode({provider,code,pkceVerifier,clie
   let response;
   try {
     response=await fetcher(TOKEN_ENDPOINTS[provider],{
-      method:'POST',redirect:'error',signal:AbortSignal.timeout(10000),
+      method:'POST',redirect:'manual',signal:AbortSignal.timeout(10000),
       headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'application/json'},
       body:new URLSearchParams({client_id:clientId,client_secret:clientSecret,
         code,redirect_uri:redirectUri,grant_type:'authorization_code',code_verifier:pkceVerifier}).toString(),
@@ -39,7 +39,7 @@ export async function exchangeAuthorizationCode({provider,code,pkceVerifier,clie
   let keysResponse;
   try {
     keysResponse=await fetcher('https://www.googleapis.com/oauth2/v3/certs',{
-      method:'GET',redirect:'error',signal:AbortSignal.timeout(10000),
+      method:'GET',redirect:'manual',signal:AbortSignal.timeout(10000),
     });
   } catch { throw new Error('Google verification keys unreachable'); }
   if (!keysResponse.ok) throw new Error('Google verification keys unavailable');
