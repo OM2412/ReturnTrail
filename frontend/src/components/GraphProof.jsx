@@ -96,7 +96,7 @@ export default function GraphProof({ graph, selected }) {
           Source-linked graph path for {selected.evidenceId}
         </title>
         <desc id="proof-description">
-          Seven relationships matched in FalkorDB connect this source to its
+          The linked evidence relationships connect this source to its
           statement, pickup, return, item, order and case. Exact directions are
           listed below.
         </desc>
@@ -226,7 +226,7 @@ export default function GraphProof({ graph, selected }) {
           ))}
         </ul>
         <p>
-          Returned by a fixed, parameterized FalkorDB query. This is the
+          Returned from the workspace-scoped D1 relationship reader. This is the
           evidence path, not every node in the workspace.
         </p>
       </details>
