@@ -35,18 +35,34 @@ export async function handleOAuthRoute(request,env,{exchange=exchangeAuthorizati
   if (url.searchParams.has('error')) return reply(401,'Provider authorization denied',true);
   const state=url.searchParams.get('state'),code=url.searchParams.get('code');
   if (!code || !state) return reply(400,'Missing OAuth callback parameters',true);
+  let stage='state';
   try {
     const transaction=await consumeOAuth(env.DB,{provider,state,cookieState:cookieState(request)});
     if (!transaction) return reply(403,'OAuth state is invalid or expired',true);
+    stage='exchange';
     const identity=await exchange({...config,provider,code,redirectUri:callback,...transaction});
     if (identity?.provider!==provider)return reply(401,'OAuth provider mismatch',true);
+    stage='provision';
     if (provider==='GOOGLE' && env.GOOGLE_CUSTOMER_SIGNUP==='true')
       await provisionVerifiedGoogleCustomer(env.DB,identity);
+    stage='session';
     const result=await issueSessionForKnownIdentity(env.DB,identity);
     if (!result) return reply(403,'Account not linked; contact administrator',true);
     const headers=new Headers({'location':'/','cache-control':'no-store'});
     headers.append('set-cookie',clearState);
     headers.append('set-cookie',accountSessionCookie(result.token));
     return new Response(null,{status:303,headers});
-  } catch {return reply(401,'OAuth verification failed',true);}
+  } catch (error) {
+    // Fixed reason allowlist: never log codes, provider tokens, emails or SQL values.
+    const knownReasons=new Set(['Invalid OAuth exchange parameters','OAuth code exchange failed',
+      'Provider rejected authorization code','Missing Google identity token',
+      'Google verification keys unavailable','Invalid Google token','Invalid token encoding',
+      'Unsupported Google signature','Unknown Google signing key','Invalid Google signature',
+      'Invalid Google identity claims','Invalid Google verification context',
+      'Verified Google subject required']);
+    console.warn('returntrail_oauth_callback_failure',{
+      provider,stage,reason:knownReasons.has(error?.message)?error.message:'internal_error',
+    });
+    return reply(401,'OAuth verification failed',true);
+  }
 }
