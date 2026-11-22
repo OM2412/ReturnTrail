@@ -28,3 +28,16 @@ export async function provisionCustomerAccountByAdmin(db,{provider,subject,works
   ]);
   return {created:true,accountId,workspaceId,seededDemo:true};
 }
+
+// Opt-in, verified-assertion-only onboarding. The OAuth exchange must validate
+// the Google ID token signature, issuer, audience, nonce and expiry before this
+// function is called. Email is never used as a lookup or linking credential.
+// Legacy graph records are not imported; only fictional new-workspace seed data.
+export async function provisionVerifiedGoogleCustomer(db,identity) {
+  if (!identity || identity.provider!=='GOOGLE' ||
+      typeof identity.subject!=='string' || !/^[A-Za-z0-9_.-]{1,255}$/.test(identity.subject))
+    throw new Error('Verified Google subject required');
+  return provisionCustomerAccountByAdmin(db,{
+    provider:'GOOGLE',subject:identity.subject,workspaceName:'My ReturnTrail workspace',
+  });
+}
