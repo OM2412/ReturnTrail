@@ -3,6 +3,12 @@
 This is **not** the current production app. It is a separate, un-deployed
 Worker/D1 migration foundation. Do not route the live frontend here yet.
 
+An isolated, empty Cloudflare D1 preview database named `returntrail-preview`
+has been created. `wrangler.preview.jsonc` targets it exclusively, under the
+preview Worker name `returntrail-preview-api`; neither the main config nor
+the live frontend has been changed. **Schema migrations and runtime tests
+have not yet been run against that cloud database.**
+
 ## Why
 
 The existing Java application uses FalkorDB-specific Cypher across six graph

@@ -1,0 +1,13 @@
+{
+  "name": "returntrail-preview-api",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-21",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "returntrail-preview",
+      "database_id": "2e0842e5-55ba-4d20-aa9c-d8dd31080560",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
