@@ -53,13 +53,20 @@ export async function handleOAuthRoute(request,env,{exchange=exchangeAuthorizati
     headers.append('set-cookie',accountSessionCookie(result.token));
     return new Response(null,{status:303,headers});
   } catch (error) {
-    // Fixed reason allowlist: never log codes, provider tokens, emails or SQL values.
-    const knownReasons=new Set(['Invalid OAuth exchange parameters','OAuth code exchange failed',
+    // A fixed allowlist keeps logs diagnostic without recording OAuth codes,
+    // access tokens, provider responses, email addresses, or SQL parameters.
+    const knownReasons=new Set([
+      'Invalid OAuth exchange parameters','OAuth code exchange failed',
       'Provider rejected authorization code','Missing Google identity token',
-      'Google verification keys unavailable','Invalid Google token','Invalid token encoding',
-      'Unsupported Google signature','Unknown Google signing key','Invalid Google signature',
+      'OAuth token endpoint unavailable','OAuth token response malformed',
+      'Google verification keys unavailable','Google verification keys unreachable',
+      'Google verification keys malformed','Google verification runtime error',
+      'Invalid Google token',
+      'Invalid token encoding','Unsupported Google signature',
+      'Unknown Google signing key','Invalid Google signature',
       'Invalid Google identity claims','Invalid Google verification context',
-      'Verified Google subject required']);
+      'Verified Google subject required',
+    ]);
     console.warn('returntrail_oauth_callback_failure',{
       provider,stage,reason:knownReasons.has(error?.message)?error.message:'internal_error',
     });
