@@ -119,7 +119,6 @@ test("unported endpoints fail explicitly instead of returning fake case data", a
   assert.equal(result.status, 501);
 });
 
-
 test("logout requires same-origin CSRF and revokes the guest cookie", async () => {
   const env = { DB: new FakeDb() };
   const initial = await worker.fetch(req("/api/auth/csrf"), env);
@@ -144,4 +143,19 @@ test("logout requires same-origin CSRF and revokes the guest cookie", async () =
   assert.equal(result.status, 204);
   assert.match(result.headers.get("set-cookie"), /RTSESSION=;.*Max-Age=0/);
   assert.equal(env.DB.sessions.size, 0);
+});
+
+test("health checks D1 readiness without exposing database errors", async () => {
+  const healthy = await worker.fetch(req("/api/health"), {
+    DB: { prepare: () => ({ first: async () => ({ ok: 1 }) }) },
+  });
+  assert.equal(healthy.status, 200);
+  assert.equal((await healthy.json()).database, "ready");
+  assert.equal(healthy.headers.get("cache-control"), "no-store");
+  assert.equal(healthy.headers.get("x-content-type-options"), "nosniff");
+  const down = await worker.fetch(req("/api/health"), {
+    DB: { prepare: () => ({ first: async () => { throw new Error("private SQL details"); } }) },
+  });
+  assert.equal(down.status, 503);
+  assert.deepEqual(await down.json(), { status: "unavailable" });
 });
