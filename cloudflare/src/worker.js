@@ -2,6 +2,7 @@
 import { prepareSeed } from "./seed.js";
 import { listEvidence, proof } from "./caseRead.js";
 import { caseSnapshot } from "./snapshot.js";
+import { readActions,readClarifications,createFollowups,saveClarification } from "./workflows.js";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const COOKIE = "RTSESSION";
 
@@ -116,6 +117,31 @@ export default {
         if (error.message === "Case changed during snapshot")
           return json({ error: "Case changed during read. Refresh and retry." }, 409);
         throw error;
+      }
+    }
+    const actionsMatch = pathname.match(/^\/api\/cases\/(CASE-[0-9]{3})\/(actions|clarifications|actions\/clarification)$/);
+    if (actionsMatch && ["GET","POST"].includes(method)) {
+      const current = await session(env.DB,request);
+      if (!current) return json({ error:"Guest workspace required" },401);
+      const caseId = actionsMatch[1];
+      const kind = actionsMatch[2];
+      if (method === "GET" && kind !== "actions/clarification") {
+        const value = kind === "actions" ? await readActions(env.DB,current.id,caseId)
+          : await readClarifications(env.DB,current.id,caseId);
+        return value ? json(value) : json({error:"Case not found"},404);
+      }
+      if (method === "POST" && kind !== "clarifications") {
+        if (!(await checkMutation(request,env.DB))) return json({error:"Forbidden"},403);
+        if (kind === "actions") {
+          const result = await createFollowups(env.DB,current.id,caseId);
+          return json(result.value,result.status);
+        }
+        if (Number(request.headers.get("content-length")) > 8192)
+          return json({error:"Request too large"},413);
+        let input;
+        try { input = await request.json(); } catch { return json({error:"Malformed JSON"},400); }
+        const result = await saveClarification(env.DB,current.id,caseId,input);
+        return json(result.value,result.status);
       }
     }
     if (method === "DELETE" && pathname === "/api/guest-sessions") {

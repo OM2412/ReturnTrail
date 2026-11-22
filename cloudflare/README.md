@@ -23,8 +23,12 @@ data, but is not a drop-in graph driver replacement.
   canonical SHA-256 evidence revisions, Java-compatible UUIDv3 finding IDs,
   pending-clarification policy and four seeded scenario assessments. A second
   SQL migration adds read-model fields for seeded follow-up history.
-- Remaining write workflows intentionally respond `501` until concurrency,
-  idempotency, version checks and UI parity are verified.
+- Guest follow-up creation and manual clarification endpoints now support
+  CSRF checks, source-version guards, transaction-scoped workflow revisions,
+  deterministic task keys and reply-idempotency. These paths are still
+  **experimental** and need browser/concurrent-worker integration tests.
+- Evidence ingestion, AI investigation, context analysis and OAuth remain
+  unported and intentionally return `501`.
 - OAuth, Groq, source comparisons, idempotency, rate limits and per-account
   authorization are **not yet ported**. Do not claim feature parity.
 
