@@ -192,6 +192,33 @@ export default {
         count:snapshot.findings.length,findings:snapshot.findings})
         : json({error:"Case not found"},404);
     }
+    // D1 offers a clearly identified rules-only check. It does not pretend
+    // that an LLM was invoked, nor does it send any customer information out.
+    const investigationMatch = pathname.match(/^\/api\/cases\/(CASE-[0-9]{3})\/investigate$/);
+    if (method === 'POST' && investigationMatch) {
+      const current=await session(env.DB,request,accountMode);
+      if (!current)return json({error:'Guest workspace required'},401);
+      if (!(await checkMutation(request,env.DB,accountMode)))return json({error:'Forbidden'},403);
+      const caseId=investigationMatch[1];
+      const actions=await createFollowups(env.DB,current.id,caseId);
+      if (actions.status!==200)return json(actions.value,actions.status);
+      const snapshot=await caseSnapshot(env.DB,current.id,caseId);
+      if (!snapshot)return json({error:'Case not found'},404);
+      const evidenceIds=snapshot.evidence.map(row=>row.evidenceId);
+      return json({caseId,synthetic:true,model:'none — deterministic D1 rules',modelRequests:0,
+        summary:`Rules-only comparison of ${snapshot.evidence.length} synthetic records. `+
+          `${snapshot.pendingFindings.length} question(s) still need context. `+
+          'Original records are not independently verified; no AI call, refund, or external message occurred.',
+        evidence:snapshot.evidence,findings:snapshot.findings,
+        clarifications:snapshot.clarifications,pendingFindings:snapshot.pendingFindings,
+        toolTrace:[
+          {tool:'get_case_evidence',resultCount:snapshot.evidence.length,evidenceIds},
+          {tool:'get_case_clarifications',resultCount:snapshot.clarifications.length},
+          {tool:'get_case_findings',resultCount:snapshot.pendingFindings.length,evidenceIds},
+          {tool:'prepare_followup_action',resultCount:actions.value.actions.length,
+            actionIds:actions.value.actions.map(a=>a.actionId)},
+        ]});
+    }
     const workspaceMatch = pathname.match(/^\/api\/cases\/(CASE-[0-9]{3})\/(snapshot|brief)$/);
     if (method === "GET" && workspaceMatch) {
       const current = await session(env.DB, request,accountMode);
