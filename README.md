@@ -1,3 +1,28 @@
+<div align="center">
+
+# ReturnTrail — Graph-powered Return Dispute Investigation
+
+**Connect conflicting pickup records to original evidence, preserve support replies, and prepare clearer source-linked follow-ups.**
+
+[**Documented Render Preview**](https://returntrail-api.onrender.com/) · [**Watch the Walkthrough**](https://youtu.be/5lfysyQZOO0) · [**Source Code**](https://github.com/OM2412/ReturnTrail)
+
+![Java](https://img.shields.io/badge/Java-21-orange) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1-green) ![React](https://img.shields.io/badge/UI-React-blue) ![FalkorDB](https://img.shields.io/badge/Graph-FalkorDB-purple) ![Groq](https://img.shields.io/badge/AI-Groq-orange)
+
+</div>
+
+## Project at a glance
+
+| Challenge | ReturnTrail workflow |
+| --- | --- |
+| Different sources describe the same pickup differently | Link statements to pickup attempts and original source documents in FalkorDB |
+| Automated answers can lack proof | Use bounded rule checks and ordered, evidence-retrieving AI tool calls |
+| Earlier support explanations get lost | Keep manually recorded outcomes, reviewed source coverage and case history |
+| New evidence can reopen an issue | Preview the updated graph context and prepare a fresh, source-linked follow-up |
+
+**Try the documented demo:** Visit [ReturnTrail](https://returntrail-api.onrender.com/), choose **Explore as a guest**, inspect CASE-001 and follow the evidence → context → investigation → support brief flow.
+
+> **Deployment note:** The link above is the Render origin documented in this repository, **not a newly verified Cloudflare URL**. Current uptime was not independently confirmed. Use fictional records; free preview storage is not durable.
+
 
 > **Current project links:** [Render demo target](https://returntrail-api.onrender.com/) · [Walkthrough video](https://youtu.be/5lfysyQZOO0) · [Hosting notes](docs/DEPLOYMENT.md).  
 > The Render link is a documented public preview, not a fresh uptime guarantee. Fictional practice cases only.
