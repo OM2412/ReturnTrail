@@ -4,9 +4,9 @@
 
 **Connect conflicting pickup records to original evidence, preserve support replies, and prepare clearer source-linked follow-ups.**
 
-[**Live Demo (Render)**](https://returntrail.onrender.com/) · [**Watch the Walkthrough**](https://youtu.be/5lfysyQZOO0) · [**Source Code**](https://github.com/OM2412/ReturnTrail)
+[**Live Demo (Render)**](https://returntrail.onrender.com/) · [**Cloudflare D1 Preview**](https://returntrail-preview-api.omjadon242-67c.workers.dev/) · [**Watch the Walkthrough**](https://youtu.be/5lfysyQZOO0) · [**Source Code**](https://github.com/OM2412/ReturnTrail)
 
-![Java](https://img.shields.io/badge/Java-21-orange) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1-green) ![React](https://img.shields.io/badge/UI-React-blue) ![FalkorDB](https://img.shields.io/badge/Graph-FalkorDB-purple) ![Groq](https://img.shields.io/badge/AI-Groq-orange)
+![Java](https://img.shields.io/badge/Java-21-orange) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1-green) ![React](https://img.shields.io/badge/UI-React-blue) ![Cloudflare D1](https://img.shields.io/badge/Preview-Cloudflare_D1-orange) ![FalkorDB](https://img.shields.io/badge/Original_Graph-FalkorDB-purple) ![Groq](https://img.shields.io/badge/AI-Groq-orange)
 
 </div>
 
@@ -14,14 +14,14 @@
 
 | Challenge | ReturnTrail workflow |
 | --- | --- |
-| Different sources describe the same pickup differently | Link statements to pickup attempts and original source documents in FalkorDB |
+| Different sources describe the same pickup differently | Link statements to pickup attempts and original source documents; the original graph implementation uses FalkorDB |
 | Automated answers can lack proof | Use bounded rule checks and ordered, evidence-retrieving AI tool calls |
 | Earlier support explanations get lost | Keep manually recorded outcomes, reviewed source coverage and case history |
 | New evidence can reopen an issue | Preview the updated graph context and prepare a fresh, source-linked follow-up |
 
 **Try the live demo:** Visit [ReturnTrail](https://returntrail.onrender.com/), choose **Explore as a guest**, inspect CASE-001 and follow the evidence → context → investigation → support brief flow.
 
-> **Deployment note:** The link above is the updated Render deployment provided by the project owner. Current uptime was not independently confirmed. Use fictional records; free preview storage is not durable.
+> **Deployment note:** The Render URL was supplied by the project owner. The original hosted FalkorDB instance has expired; see the Cloudflare D1 preview and deployment differences below. Current end-to-end functionality has not been independently confirmed. Use fictional records; free preview storage is not durable.
 
 
 > **Current project links:** [Render demo target](https://returntrail.onrender.com/) · [Walkthrough video](https://youtu.be/5lfysyQZOO0) · [Hosting notes](docs/DEPLOYMENT.md).  
@@ -58,6 +58,18 @@ ReturnTrail helps a shopper prepare an evidence-linked conversation about a disp
 Built for [WeMakeDevs × FalkorDB Graph Hacks](https://www.wemakedevs.org/hackathons/falkordb), under **Agents That Act on Connected Data**.
 
 > **Practice data, clear boundaries.** This prototype uses fictional cases. A recorded claim is not proof of fault, and a resolved follow-up task does not establish whole-case resolution. No message is sent and no refund is issued.
+
+## Deployment evolution: FalkorDB to Cloudflare D1 preview
+
+The original ReturnTrail project uses **FalkorDB** for graph traversal, evidence provenance and saved context. **The hosted FalkorDB instance expired**, so those original graph-backed cloud features should not be assumed available simply because the Render frontend loads.
+
+A separate **Cloudflare Workers + D1 preview** was deployed as an alternative. Its actual deployment and D1 binding were observed in the Cloudflare dashboard, with the worker connected to this repository:
+
+- **Render application:** https://returntrail.onrender.com/
+- **Cloudflare Workers preview:** https://returntrail-preview-api.omjadon242-67c.workers.dev/
+- **Cloudflare D1 database:** `returntrail-preview` (bound as `DB` to the preview Worker)
+
+The D1-backed preview is **not automatically equivalent to the original FalkorDB graph engine**. Features including Cypher traversal, case investigation, authentication, and Groq tool calls must be checked against that specific deployment before claiming parity. The instructions, screenshots, historical verification results and FalkorDB graph sections below describe the original implementation unless a Cloudflare-specific scope is stated. Neither URL is an independently confirmed end-to-end functionality guarantee.
 
 ## The problem
 
