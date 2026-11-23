@@ -2,8 +2,8 @@
 
 ## Current public preview
 
-**Live:** https://returntrail-api.onrender.com  
-**Readiness:** https://returntrail-api.onrender.com/actuator/health/readiness
+**Live:** https://returntrail.onrender.com  
+**Readiness:** https://returntrail.onrender.com/actuator/health/readiness
 
 | Component | Current deployment |
 | --- | --- |
@@ -28,7 +28,7 @@ Render Free can sleep after 15 minutes without incoming traffic; waking can take
 | `FALKORDB_HOST`, `FALKORDB_PORT` | Exact database connection endpoint from the console |
 | `FALKORDB_USERNAME`, `FALKORDB_PASSWORD` | Exact issued credentials; the current instance uses username `falkordb`, not an assumed default |
 | `FALKORDB_SSL` | `false` for the non-TLS Free endpoint; `true` only with a TLS-enabled endpoint |
-| `RETURNTRAIL_PUBLIC_URL` | `https://returntrail-api.onrender.com` for this deployment; use your own final HTTPS origin for another service |
+| `RETURNTRAIL_PUBLIC_URL` | `https://returntrail.onrender.com` for this deployment; use your own final HTTPS origin for another service |
 | `SESSION_COOKIE_SECURE` | `true` |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Backend-only credentials from the corresponding provider clients; see [public login setup](LOGIN-SETUP.md#public-deployment-google-and-github) |
 | `GOOGLE_LOGIN_ENABLED`, `GITHUB_LOGIN_ENABLED` | The current operator-enabled preview uses `true`; add matching credentials and exact public callbacks before enabling either provider. A new guest-only copy can leave both `false`. |
@@ -94,7 +94,7 @@ npm.cmd run build
 Remove-Item Env:VITE_PUBLIC_URL
 ```
 
-Verify the rebuilt homepage source contains the correct canonical and Open Graph image, and `/sitemap.xml` returns the public URL set. The initial 18 October public check found those tags absent and the sitemap returned 404. After configuring `PUBLIC_SITE_URL=https://returntrail-api.onrender.com` and rebuilding, the homepage metadata, sharing PNG, robots sitemap declaration and four-page XML sitemap passed the live check; see [the validation record](PUBLIC-VALIDATION.md). Keep the origin setting when rebuilding this deployment.
+Verify the rebuilt homepage source contains the correct canonical and Open Graph image, and `/sitemap.xml` returns the public URL set. The initial 18 October public check found those tags absent and the sitemap returned 404. After configuring `PUBLIC_SITE_URL=https://returntrail.onrender.com` and rebuilding, the homepage metadata, sharing PNG, robots sitemap declaration and four-page XML sitemap passed the live check; see [the validation record](PUBLIC-VALIDATION.md). Keep the origin setting when rebuilding this deployment.
 
 An unset origin omits canonical/sitemap claims rather than inventing a localhost production URL. Public HTML guides work without React. There is no guarantee of indexing, first rank or rich results.
 
