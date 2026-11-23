@@ -1,3 +1,7 @@
+
+> **Current project links:** [Render demo target](https://returntrail-api.onrender.com/) · [Walkthrough video](https://youtu.be/5lfysyQZOO0) · [Hosting notes](docs/DEPLOYMENT.md).  
+> The Render link is a documented public preview, not a fresh uptime guarantee. Fictional practice cases only.
+
 <p align="center">
   <img src="docs/assets/banner.svg" alt="ReturnTrail — two records, one pickup, a clearer next question" width="1100" />
 </p>
