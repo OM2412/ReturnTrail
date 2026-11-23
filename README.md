@@ -4,7 +4,7 @@
 
 **Connect conflicting pickup records to original evidence, preserve support replies, and prepare clearer source-linked follow-ups.**
 
-[**Documented Render Preview**](https://returntrail-api.onrender.com/) · [**Watch the Walkthrough**](https://youtu.be/5lfysyQZOO0) · [**Source Code**](https://github.com/OM2412/ReturnTrail)
+[**Live Demo (Render)**](https://returntrail.onrender.com/) · [**Watch the Walkthrough**](https://youtu.be/5lfysyQZOO0) · [**Source Code**](https://github.com/OM2412/ReturnTrail)
 
 ![Java](https://img.shields.io/badge/Java-21-orange) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1-green) ![React](https://img.shields.io/badge/UI-React-blue) ![FalkorDB](https://img.shields.io/badge/Graph-FalkorDB-purple) ![Groq](https://img.shields.io/badge/AI-Groq-orange)
 
@@ -19,13 +19,13 @@
 | Earlier support explanations get lost | Keep manually recorded outcomes, reviewed source coverage and case history |
 | New evidence can reopen an issue | Preview the updated graph context and prepare a fresh, source-linked follow-up |
 
-**Try the documented demo:** Visit [ReturnTrail](https://returntrail-api.onrender.com/), choose **Explore as a guest**, inspect CASE-001 and follow the evidence → context → investigation → support brief flow.
+**Try the live demo:** Visit [ReturnTrail](https://returntrail.onrender.com/), choose **Explore as a guest**, inspect CASE-001 and follow the evidence → context → investigation → support brief flow.
 
-> **Deployment note:** The link above is the Render origin documented in this repository, **not a newly verified Cloudflare URL**. Current uptime was not independently confirmed. Use fictional records; free preview storage is not durable.
+> **Deployment note:** The link above is the updated Render deployment provided by the project owner. Current uptime was not independently confirmed. Use fictional records; free preview storage is not durable.
 
 
-> **Current project links:** [Render demo target](https://returntrail-api.onrender.com/) · [Walkthrough video](https://youtu.be/5lfysyQZOO0) · [Hosting notes](docs/DEPLOYMENT.md).  
-> The Render link is a documented public preview, not a fresh uptime guarantee. Fictional practice cases only.
+> **Current project links:** [Render demo target](https://returntrail.onrender.com/) · [Walkthrough video](https://youtu.be/5lfysyQZOO0) · [Hosting notes](docs/DEPLOYMENT.md).  
+> The Render link is the owner-provided deployment URL, not a fresh uptime guarantee. Fictional practice cases only.
 
 <p align="center">
   <img src="docs/assets/banner.svg" alt="ReturnTrail — two records, one pickup, a clearer next question" width="1100" />
@@ -36,7 +36,7 @@
 </p>
 
 <p align="center">
-  <a href="https://returntrail-api.onrender.com">Open live demo</a> ·
+  <a href="https://returntrail.onrender.com">Open live demo</a> ·
   <a href="https://youtu.be/5lfysyQZOO0">Watch demo video</a> ·
   <a href="#try-the-demo">Demo walkthrough</a> ·
   <a href="#why-a-graph">Why a graph?</a> ·
@@ -74,8 +74,8 @@ For **CASE-001**, both records describe **PICKUP-001**. The app retains both cla
 **[Watch the complete demo on YouTube →](https://youtu.be/5lfysyQZOO0)** · 4 minutes 15 seconds  
 Compare original evidence, inspect graph connections, run the AI investigation, record a manual task outcome, and review what changes when a new source arrives.
 
-**[Open ReturnTrail →](https://returntrail-api.onrender.com)**  
-https://returntrail-api.onrender.com — choose **Explore as a guest**; no account or personal model key required.
+**[Open ReturnTrail →](https://returntrail.onrender.com)**  
+https://returntrail.onrender.com — choose **Explore as a guest**; no account or personal model key required.
 
 > **Free preview:** Google/GitHub sign-in is configured; guest entry remains available. Render may need about a minute to wake after inactivity; backend restarts reset sessions. The free cloud database has no persistence or backups, so preview work can be lost. Use fictional data and export your brief. [Current hosting and limits](docs/DEPLOYMENT.md#current-public-preview).
 
@@ -85,7 +85,7 @@ https://returntrail-api.onrender.com — choose **Explore as a guest**; no accou
 
 **A suggested 90-second walkthrough:**
 
-1. Open [ReturnTrail](https://returntrail-api.onrender.com) and choose **Explore as a guest**. Alternatively, [run locally](#run-locally) at `http://127.0.0.1:5174`.
+1. Open [ReturnTrail](https://returntrail.onrender.com) and choose **Explore as a guest**. Alternatively, [run locally](#run-locally) at `http://127.0.0.1:5174`.
 2. Open **CASE-001**. Compare the original words in **Evidence**, then inspect their returned source paths in **Connections**.
 3. Open **Context lab** and set aside **DOC-001**. The supported rule outcome changes because only one recorded reason remains. The original evidence stays untouched.
 4. In **Investigation**, choose **Review rules & prepare question**. This prepares or reuses a source-linked local follow-up without a model call.
